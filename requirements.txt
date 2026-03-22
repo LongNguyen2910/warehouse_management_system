@@ -4,4 +4,3 @@ flasgger
 pyodbc
 python-dotenv
 flask-jwt-extended
-#pip install -r requirements.txt
