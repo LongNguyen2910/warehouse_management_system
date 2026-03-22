@@ -1,0 +1,46 @@
+# --- BẢO MẬT (CỰC KỲ QUAN TRỌNG) ---
+.env
+.env.local
+.env.sample
+!.env.example
+
+# --- PYTHON (FILE TẠM) ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# --- MÔI TRƯỜNG ẢO (VIRTUAL ENVIRONMENT) ---
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# --- IDE (CÔNG CỤ LẬP TRÌNH) ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- HỆ ĐIỀU HÀNH ---
+Thumbs.db
+db.json
+.DS_Store
+desktop.ini
