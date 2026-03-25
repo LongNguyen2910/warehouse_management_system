@@ -35,7 +35,9 @@ CREATE TABLE Warehouses (
     id INT PRIMARY KEY IDENTITY(1,1),
     name NVARCHAR(100) NOT NULL,
     address NVARCHAR(255),
-    capacity INT -- Sức chứa tối đa
+    capacity INT, -- Sức chứa tối đa
+    Latitude DECIMAL(9, 6),
+    Longitude DECIMAL(10, 6)
 );
 -- 6. Bảng Tồn kho hiện tại (Inventory)
 CREATE TABLE Inventory (
