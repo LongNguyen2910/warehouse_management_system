@@ -42,7 +42,7 @@ CREATE TABLE Warehouses (
 
 -- 6. Bảng Tồn kho hiện tại (Inventory)
 CREATE TABLE Inventory (
-    id INT PRIMARY KEY IDENTITY(1,1), -- Thêm ID tự tăng
+    id INT PRIMARY KEY IDENTITY(1,1),
     warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
     product_id INT FOREIGN KEY REFERENCES Products(id),
     quantity INT NOT NULL DEFAULT 0,
@@ -83,7 +83,7 @@ CREATE TABLE Transfer_Orders (
 
 -- 10. Chi tiết lệnh điều chuyển (Transfer_Details)
 CREATE TABLE Transfer_Details (
-    id INT PRIMARY KEY IDENTITY(1,1), -- Thêm ID tự tăng
+    id INT PRIMARY KEY IDENTITY(1,1),
     transfer_id INT FOREIGN KEY REFERENCES Transfer_Orders(id),
     product_id INT FOREIGN KEY REFERENCES Products(id),
     quantity INT NOT NULL CHECK (quantity > 0),

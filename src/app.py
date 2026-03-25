@@ -51,7 +51,7 @@ def handle_exception(e):
     response = {
         "success": False,
         "error_code": "INTERNAL_SERVER_ERROR",
-        "message": "System encountered an unexpected error. Please try again later"
+        "message": "System encountered an unexpected error. Please try again later."
     }
 
     #If in debug mode, include exception details for easier troubleshooting
@@ -59,6 +59,7 @@ def handle_exception(e):
         response["details"] = str(e)
         
     return jsonify(response), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
