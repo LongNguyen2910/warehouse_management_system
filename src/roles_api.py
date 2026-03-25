@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, abort, jsonify
 import flask
 from db_helper import query_db
 roles_bp = Blueprint('roles', __name__)
@@ -25,7 +25,8 @@ def get_roles():
                 type: string
               example: ["Admin", "Staff", "Manager", "Delivery person"]
     """
-    return query_db("SELECT * FROM Roles"), 200
+    roles = query_db("SELECT * FROM Roles")
+    return jsonify(roles), 200
 
 @roles_bp.route('/', methods=['POST'])
 def create_role():
@@ -57,5 +58,6 @@ def create_role():
     """
     role_name = flask.request.json["role_name"]
     if not role_name:
-        return jsonify({"success": False, "message": "Tên vai trò không được để trống"}), 400
+        abort(400, description="Tên vai trò không được để trống")
+    
     
