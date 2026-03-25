@@ -30,19 +30,30 @@ app.register_blueprint(roles_bp, url_prefix='/api/roles')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
+    # Global error handler to catch all unhandled exceptions and return a consistent JSON response.
+    # Using abort() to catch HTTP exceptions
+    # Example:
+    #     abort(404, description="Sản phẩm này không tồn tại trong kho")
+    
+    #HTTP Exceptions (404, 500, etc.)
     if isinstance(e, HTTPException):
         return jsonify({
             "success": False,
-            "error_code": e.name.upper().replace(" ", "_"),
-            "message": e.description
+            "error_code": f"HTTP_{e.code}",
+            "message": e.description,
         }), e.code
     
-    print(f"Error System: {str(e)}")
+    #Logic errors (in Python code) or unexpected exceptions
     response = {
         "success": False,
-        "message": "Error, Check again",
-        "error_details": str(e)
+        "error_code": "INTERNAL_SERVER_ERROR",
+        "message": "System encountered an unexpected error. Please try again later."
     }
+
+    #If in debug mode, include exception details for easier troubleshooting
+    if app.config.get("DEBUG"):
+        response["details"] = str(e)
+        
     return jsonify(response), 500
 
 if __name__ == '__main__':
