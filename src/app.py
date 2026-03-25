@@ -31,10 +31,14 @@ app.register_blueprint(roles_bp, url_prefix='/api/roles')
 @app.errorhandler(Exception)
 def handle_exception(e):
     # Global error handler to catch all unhandled exceptions and return a consistent JSON response.
+    # Use
+    #   404: Not Found for resources that don't exist (e.g., invalid endpoint, missing product)
+    #   400: Bad Request for invalid input data (e.g., missing required fields, invalid data types)
+    #   500: Internal Server Error for unexpected issues in the server code (e.g., database errors, unhandled exceptions)
     # Using abort() to catch HTTP exceptions
     # Example:
     #     abort(404, description="Sản phẩm này không tồn tại trong kho")
-    
+
     #HTTP Exceptions (404, 500, etc.)
     if isinstance(e, HTTPException):
         return jsonify({
@@ -47,7 +51,7 @@ def handle_exception(e):
     response = {
         "success": False,
         "error_code": "INTERNAL_SERVER_ERROR",
-        "message": "System encountered an unexpected error. Please try again later."
+        "message": "System encountered an unexpected error. Please try again later"
     }
 
     #If in debug mode, include exception details for easier troubleshooting
@@ -57,4 +61,4 @@ def handle_exception(e):
     return jsonify(response), 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
