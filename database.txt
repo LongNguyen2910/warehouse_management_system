@@ -1,10 +1,10 @@
--- 1. Tạo bảng Quyền (Roles)
+-- 1. Bảng Quyền (Roles)
 CREATE TABLE Roles (
     id INT PRIMARY KEY IDENTITY(1,1),
     role_name NVARCHAR(50) NOT NULL UNIQUE
 );
 
--- 2. Tạo bảng Người dùng (Users)
+-- 2. Bảng Người dùng (Users)
 CREATE TABLE Users (
     id INT PRIMARY KEY IDENTITY(1,1),
     username NVARCHAR(50) NOT NULL UNIQUE,
@@ -13,61 +13,64 @@ CREATE TABLE Users (
     created_at DATETIME DEFAULT GETDATE()
 );
 
--- 3. Tạo bảng Danh mục sản phẩm (Categories)
+-- 3. Bảng Danh mục sản phẩm (Categories)
 CREATE TABLE Categories (
     id INT PRIMARY KEY IDENTITY(1,1),
     name NVARCHAR(100) NOT NULL UNIQUE
 );
 
--- 4. Tạo bảng Sản phẩm (Products)
+-- 4. Bảng Sản phẩm (Products)
 CREATE TABLE Products (
     id INT PRIMARY KEY IDENTITY(1,1),
-    sku NVARCHAR(50) NOT NULL UNIQUE, -- Mã nghiệp vụ duy nhất
+    sku NVARCHAR(50) NOT NULL UNIQUE,
     name NVARCHAR(255) NOT NULL,
     category_id INT FOREIGN KEY REFERENCES Categories(id),
-    min_stock INT DEFAULT 0, -- Ngưỡng cảnh báo hàng sắp hết
+    min_stock INT DEFAULT 0,
     description NVARCHAR(MAX),
     created_at DATETIME DEFAULT GETDATE()
 );
 
--- 5. Tạo bảng Kho hàng (Warehouses)
+-- 5. Bảng Kho hàng (Warehouses)
 CREATE TABLE Warehouses (
     id INT PRIMARY KEY IDENTITY(1,1),
     name NVARCHAR(100) NOT NULL,
     address NVARCHAR(255),
-    capacity INT, -- Sức chứa tối đa
+    capacity INT,
     Latitude DECIMAL(9, 6),
     Longitude DECIMAL(10, 6)
 );
+
 -- 6. Bảng Tồn kho hiện tại (Inventory)
 CREATE TABLE Inventory (
+    id INT PRIMARY KEY IDENTITY(1,1),
     warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
     product_id INT FOREIGN KEY REFERENCES Products(id),
     quantity INT NOT NULL DEFAULT 0,
-    PRIMARY KEY (warehouse_id, product_id),
-    CONSTRAINT CHK_Inventory_Quantity CHECK (quantity >= 0) -- Không cho phép tồn kho âm
+    CONSTRAINT CHK_Inventory_Quantity CHECK (quantity >= 0),
+    CONSTRAINT UQ_Warehouse_Product UNIQUE (warehouse_id, product_id) -- Đảm bảo 1 kho - 1 sản phẩm chỉ có 1 dòng
 );
 
 -- 7. Bảng Phiếu Nhập/Xuất (Receipts)
--- Gộp chung hoặc tách riêng tùy ý, ở đây mình tạo bảng chung để quản lý
 CREATE TABLE Receipts (
     id INT PRIMARY KEY IDENTITY(1,1),
     type NVARCHAR(10) CHECK (type IN ('INBOUND', 'OUTBOUND')),
     warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
     staff_id INT FOREIGN KEY REFERENCES Users(id),
-    partner_name NVARCHAR(255), -- Tên nhà cung cấp hoặc khách hàng
+    partner_name NVARCHAR(255),
     created_at DATETIME DEFAULT GETDATE()
 );
 
--- 8. Chi tiết phiếu Nhập/Xuất
+-- 8. Chi tiết phiếu Nhập/Xuất (Receipt_Details)
 CREATE TABLE Receipt_Details (
+    id INT PRIMARY KEY IDENTITY(1,1), -- Thêm ID tự tăng
     receipt_id INT FOREIGN KEY REFERENCES Receipts(id),
     product_id INT FOREIGN KEY REFERENCES Products(id),
     quantity INT NOT NULL CHECK (quantity > 0),
     price DECIMAL(18, 2),
-    PRIMARY KEY (receipt_id, product_id)
+    CONSTRAINT UQ_Receipt_Product UNIQUE (receipt_id, product_id) -- Tránh trùng sản phẩm trong 1 hóa đơn
 );
--- 9. Lệnh điều chuyển giữa các kho (Transfer Orders)
+
+-- 9. Lệnh điều chuyển (Transfer_Orders)
 CREATE TABLE Transfer_Orders (
     id INT PRIMARY KEY IDENTITY(1,1),
     from_warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
@@ -78,12 +81,13 @@ CREATE TABLE Transfer_Orders (
     created_at DATETIME DEFAULT GETDATE()
 );
 
--- 10. Chi tiết lệnh điều chuyển
+-- 10. Chi tiết lệnh điều chuyển (Transfer_Details)
 CREATE TABLE Transfer_Details (
+    id INT PRIMARY KEY IDENTITY(1,1),
     transfer_id INT FOREIGN KEY REFERENCES Transfer_Orders(id),
     product_id INT FOREIGN KEY REFERENCES Products(id),
     quantity INT NOT NULL CHECK (quantity > 0),
-    PRIMARY KEY (transfer_id, product_id)
+    CONSTRAINT UQ_Transfer_Product UNIQUE (transfer_id, product_id)
 );
 
 -- 11. Thông tin giao hàng (Shipments)
@@ -97,13 +101,14 @@ CREATE TABLE Shipments (
     expected_delivery_at DATETIME,
     actual_delivery_at DATETIME
 );
--- 12. Nhật ký tồn kho (Audit Trail)
+
+-- 12. Nhật ký tồn kho (Inventory_Logs)
 CREATE TABLE Inventory_Logs (
     id INT PRIMARY KEY IDENTITY(1,1),
     product_id INT,
     warehouse_id INT,
-    change_amount INT, -- Số lượng thay đổi (VD: +10 hoặc -5)
-    action_type NVARCHAR(20), -- 'INBOUND', 'OUTBOUND', 'TRANSFER'
-    reference_id INT, -- ID của phiếu tương ứng
+    change_amount INT,
+    action_type NVARCHAR(20),
+    reference_id INT,
     created_at DATETIME DEFAULT GETDATE()
 );
