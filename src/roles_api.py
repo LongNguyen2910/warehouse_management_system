@@ -13,6 +13,61 @@ def get_roles():
   ---
   tags:
     - Roles
+  parameters:
+    - name: id
+      in: query
+      required: false
+      type: integer
+    - name: role_name
+      in: query
+      required: false
+      type: string
+  responses:
+    200:
+      description: Danh sách các quyền
+      schema:
+        type: object
+        properties:
+          success:
+            type: boolean
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                role_name:
+                  type: string
+                  example: "ADMIN"
+    404:
+      description: "Không tim thấy vai trò nào phù hợp với tiêu chí tìm kiếm"
+  """
+  id = flask.request.args.get("id")
+  role_name = flask.request.args.get("role_name")
+  query = "SELECT * FROM Roles WHERE"
+  data = ()
+  if id:
+    query += " id = ? "
+    data += (id,)
+  if role_name:
+    if id:
+      query += " AND"
+    query += " role_name = ?"
+    data += (role_name,)
+  if not id and not role_name:
+    roles = query_db("SELECT * FROM Roles")
+  else:
+    roles = query_db(query, data)
+  if not roles:
+    return jsonify({"success": True, "message": "Không tìm thấy vai trò nào phù hợp với tiêu chí tìm kiếm"}), 404
+  return jsonify({"success": True, "data": roles}), 200
+  """
+  API Lấy danh sách các vai trò có trong hệ thống
+  ---
+  tags:
+    - Roles
   security:
     - Bearer: []
   parameters:
@@ -76,6 +131,43 @@ def create_role():
   ---
   tags:
     - Roles
+  parameters:
+    - name: body
+      in: body
+      required: true
+      schema:
+        type: object
+        properties:
+          role_name:
+            type: string
+            description: Tên vai trò
+            example: "Manager"
+  responses:
+    200:
+      description: "Vai trò mới đã được tạo"
+    400:
+      description: "Yêu cầu không hợp lệ (ví dụ: thiếu tên vai trò hoặc vai trò đã tồn tại)"
+    500:
+      description: "Đã xảy ra lỗi khi tạo vai trò mới"
+  """
+  payload = flask.request.get_json(silent=True) or {}
+  role_name = payload.get("role_name")
+  if is_empty(role_name):
+    abort(400, description="Tên vai trò không được để trống")
+  role_name = role_name.strip().upper()
+  existing = query_db("SELECT id FROM Roles WHERE role_name = ?", (role_name,), one=True)
+  if existing:
+    abort(400, description="Vai trò này đã tồn tại")
+  success = execute_db("INSERT INTO Roles (role_name) VALUES (?)", (role_name,))
+  if success:
+    return jsonify({"success": True, "message": "Vai trò mới đã được tạo"}), 200
+  else:
+      abort(500, description="Đã xảy ra lỗi khi tạo vai trò mới")
+  """
+  API Tạo vai trò mới
+  ---
+  tags:
+    - Roles
   security:
     - Bearer: []
   parameters:
@@ -117,7 +209,7 @@ def create_role():
     return jsonify({"success": True, "message": "Vai trò mới đã được tạo"}), 200
   else:
       abort(500, description="Đã xảy ra lỗi khi tạo vai trò mới")
-    
+
 @roles_bp.route('/<id>', methods=['PUT'])
 @jwt_required()
 def update_role(id):
@@ -160,7 +252,7 @@ def update_role(id):
     abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   role_name = payload.get("role_name")
-  if is_empty(role_name):
+  if role_name is None:
       abort(400, description="Tên vai trò không được để trống")
   role_name = role_name.strip().upper()
   success = execute_db("UPDATE Roles SET role_name = ? WHERE id = ?", (role_name, id))
@@ -170,7 +262,6 @@ def update_role(id):
       abort(500, description="Đã xảy ra lỗi khi cập nhật vai trò")
 
 @roles_bp.route('/<id>', methods=['DELETE'])
-@jwt_required()
 def delete_role(id):
   """
   API Xóa một vai trò
