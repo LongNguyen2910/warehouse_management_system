@@ -12,7 +12,7 @@ from roles_api import roles_bp
 
 app = Flask(__name__)
 
-CORS(app)
+CORS(app) 
 
 app.config['SWAGGER'] = {
     'title': 'WMS API - Nhóm 4',
