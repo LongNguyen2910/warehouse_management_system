@@ -22,7 +22,7 @@ swagger = Swagger(app)
 app.register_blueprint(auth_bp, url_prefix='/api/auth')   
 app.register_blueprint(inventory_bp, url_prefix='/api/inventory') 
 app.register_blueprint(logistics_bp, url_prefix='/api/logistics')
-app.register_blueprint(reports_bp, url_prefix='/api/reports/')    
+app.register_blueprint(reports_bp, url_prefix='/api/reports')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
