@@ -6,32 +6,69 @@ inventory_bp = Blueprint('inventory', __name__)
 
 @inventory_bp.route('/products', methods=['GET'])
 def get_products():
-
     """
-    200 response with list of products
-        category_name
-        created_at
-        description
-        min_stock
-        product_name
-        sku
+    API Lấy danh sách các sản phẩm có trong hệ thống
+    ---
+    tags:
+      - Products
+    responses:
+      200:
+        description: Danh sách các sản phẩm hiện có
+        schema:
+          type: array
+          items:
+            properties:
+              sku:
+                type: string
+              product_name:
+                type: string
+              category_name:
+                type: string
+              min_stock:
+                type: integer
+              description:
+                type: string
+              created_at:
+                 type: string
     """
     #Show all products from database
     products =  query_db('select sku, products.name as product_name, min_stock, description, created_at, categories.name as category_name '
                          'from products join Categories on Categories.id = products.category_id');
     return jsonify(products),200
 
-@inventory_bp.route('/products/<int:id>', methods=['GET'])
+@inventory_bp.route('/products/<id>', methods=['GET'])
 def get_product_id(id):
     """
-    200 response with list of products
-        category_name
-        created_at
-        description
-        min_stock
-        product_name
-        sku
-    """
+        API Lấy thông tin sản phẩm theo ID
+        ---
+        tags:
+          - Products
+        parameters:
+          - name: id
+            in: path
+            required: true
+            type: integer
+        responses:
+          200:
+            description: Thông tin sản phẩm
+            schema:
+              type: object
+              properties:
+                sku:
+                    type: string
+                product_name:
+                    type: string
+                category_name:
+                    type: string
+                min_stock:
+                    type: integer
+                description:
+                    type: string
+                created_at:
+                    type: string
+          404:
+            description: sản phẩm không tìm thấy hoặc không tồn tại
+        """
     #Show products that have Id matches the search Id
     product_id = query_db('select sku, products.name as product_name, min_stock, description, created_at, categories.name as category_name '
                          'from products join Categories on Categories.id = products.category_id where products.id = ?', (id,), one=True)
@@ -40,30 +77,76 @@ def get_product_id(id):
 @inventory_bp.route('/products/name=<name>', methods=['GET'])
 def get_product_name(name):
     """
-    200 response with list of products
-        category_name
-        created_at
-        description
-        min_stock
-        product_name
-        sku
-    """
-    #Show products that have Id matches the search Id
+        API Lấy thông tin sản phẩm theo ID
+        ---
+        tags:
+          - Products
+        parameters:
+          - name: name
+            in: path
+            required: true
+            type: string
+        responses:
+          200:
+            description: Thông tin sản phẩm
+            schema:
+              type: object
+              properties:
+                sku:
+                    type: string
+                product_name:
+                    type: string
+                category_name:
+                    type: string
+                min_stock:
+                    type: integer
+                description:
+                    type: string
+                created_at:
+                    type: string
+          404:
+            description: sản phẩm không tìm thấy hoặc không tồn tại
+        """
+    #Show products that have product name matches the search name
     name = name.strip()
     product_name = query_db('select sku, products.name as product_name, min_stock, description, created_at, categories.name as category_name '
                          'from products join Categories on Categories.id = products.category_id where products.name like ?', ('%' +name + '%',))
     return jsonify(product_name),200
 
 @inventory_bp.route('/products', methods=['POST'])
-def create_product():
+def add_product():
     """
-    200 response with new product:
-        sku
-        product_name
-        category_name
-        min_stock
-        description
-    """
+        API Thêm sản phẩm mới
+        ---
+        tags:
+          - Products
+        parameters:
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                sku:
+                    type: string
+                product_name:
+                    type: string
+                category_name:
+                    type: string
+                min_stock:
+                    type: integer
+                description:
+                    type: string
+                created_at:
+                    type: string
+        responses:
+          200:
+            description: Thêm thành công
+          400:
+            description: Dữ liệu không hợp lệ
+          500:
+            description: "Đã xảy ra lỗi khi thêm sản phẩm mới"
+        """
     # Receiving data in JSON file format
     data = request.get_json()
     sku = data.get('sku')
@@ -90,6 +173,9 @@ def create_product():
     exist_sku = query_db('select id from Products where sku = ?', (sku,), one=True)
     if exist_sku:
         abort(400,description="Số định danh sản phẩm đã tồn tại")
+    exist_product = query_db('select id from Products where name = ?', (name,), one=True)
+    if exist_product:
+        abort(400, description="Sản phẩm đã tồn tại")
     success = execute_db('insert into Products(sku,name,category_id,min_stock,description) '
                              'values (?,?,?,?,?)',(sku, name, category, min_stock, description))
     if success:
@@ -100,13 +186,37 @@ def create_product():
 @inventory_bp.route('/products/<int:id>', methods=['PUT'])
 def update_product(id):
     """
-    200 response with updated product with product_id:
-        sku
-        product_name
-        category_name
-        min_stock
-        description
-    """
+        API sửa thông tin sản phẩm
+        ---
+        tags:
+          - Products
+        parameters:
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              properties:
+                sku:
+                    type: string
+                product_name:
+                    type: string
+                category_name:
+                    type: string
+                min_stock:
+                    type: integer
+                description:
+                    type: string
+                created_at:
+                    type: string
+        responses:
+          200:
+            description: sửa thông tin thành công
+          400:
+            description: Dữ liệu không hợp lệ
+          500:
+            description: "Đã xảy ra lỗi khi sửa thông tin sản phẩm"
+        """
     #Receiving data in JSON file format
     data = request.get_json()
     sku = data.get('sku')
