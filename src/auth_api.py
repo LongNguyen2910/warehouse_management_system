@@ -1,6 +1,5 @@
-from os import abort
 from werkzeug.security import check_password_hash
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, abort
 import flask
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from db_helper import query_db
@@ -65,6 +64,9 @@ def login():
     # 1. Truy vấn SQL Server xem user có tồn tại không
     user = query_db("SELECT Users.id, username, role_name, password_hash FROM Users JOIN Roles ON Users.role_id = Roles.id WHERE username like ?", 
                     ('%' + user_name + '%',), one=True)
+    
+    if not user:
+        abort(401, description="Tên đăng nhập hoặc mật khẩu không đúng")
 
     if user and check_password_hash(user['password_hash'], password):
     # 2. Nếu đúng, tạo Access Token
@@ -83,5 +85,3 @@ def login():
                 "role": user['role_name']
             }
         }), 200
-
-    abort(401, description="Tên đăng nhập hoặc mật khẩu không đúng")

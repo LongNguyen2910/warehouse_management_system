@@ -141,7 +141,7 @@ def get_users():
   return jsonify({"success": True, "data": users}), 200
 
 @users_bp.route('/<id>', methods=['PUT'])
-@jwt_required
+@jwt_required()
 def change_password(id):
   """
   API Đổi mật khẩu người dùng
@@ -198,7 +198,7 @@ def change_password(id):
       abort(500, description="Đã xảy ra lỗi khi cập nhật mật khẩu")
 
 @users_bp.route('/', methods=['PUT'])
-@jwt_required
+@jwt_required()
 def update_user_role():
   """
   API Cập nhật vai trò của người dùng
@@ -220,7 +220,7 @@ def update_user_role():
             example: 1
           role_id:
             type: integer
-            description: ID của vai trò mới (ví dụ: 1 cho ADMIN, 2 cho STAFF)
+            description: ID của vai trò mới
             example: 2
   responses:
     200:
