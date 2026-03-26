@@ -1,6 +1,10 @@
+import os
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flasgger import Swagger
+from flask_jwt_extended import JWTManager
+from flask_jwt_extended.exceptions import JWTExtendedException, NoAuthorizationError
 from werkzeug.exceptions import HTTPException
 
 from auth_api import auth_bp
@@ -14,9 +18,20 @@ app = Flask(__name__)
 
 CORS(app) 
 
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+jwt = JWTManager(app)
+
 app.config['SWAGGER'] = {
     'title': 'WMS API - Nhóm 4',
     'uiversion': 3,
+    'securityDefinitions': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header',
+            'description': "Nhập Token theo định dạng: Bearer <your_token_here>"
+        }
+    }
 }
 swagger = Swagger(app)
 
@@ -60,6 +75,33 @@ def handle_exception(e):
         
     return jsonify(response), 500
 
+# 1. Lỗi khi không gửi Token kèm theo
+@jwt.unauthorized_loader
+def my_unauthorized_callback(err_str):
+    return jsonify({
+        "success": False,
+        "error_code": "MISSING_TOKEN",
+        "message": "Vui lòng cung cấp Access Token trong Header"
+    }), 401
+
+# 2. Lỗi khi Token đã hết hạn
+@jwt.expired_token_loader
+def my_expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({
+        "success": False,
+        "error_code": "TOKEN_EXPIRED",
+        "message": "Phiên đăng nhập đã hết hạn, vui lòng login lại"
+    }), 401
+
+# 3. Lỗi khi Token bị sai, bị sửa đổi
+@jwt.invalid_token_loader
+def my_invalid_token_callback(err_str):
+    return jsonify({
+        "success": False,
+        "error_code": "INVALID_TOKEN",
+        "message": "Token không hợp lệ hoặc đã bị chỉnh sửa"
+    }), 401
 
 if __name__ == '__main__':
     app.run(debug=True)
+
