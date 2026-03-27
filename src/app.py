@@ -42,7 +42,9 @@ app.register_blueprint(reports_bp, url_prefix='/api/reports')
 app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(roles_bp, url_prefix='/api/roles')
 app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
+app.register_blueprint(roles_bp, url_prefix='/api/roles')
 app.register_blueprint(products_bp, url_prefix='/api/products')
+app.register_blueprint(roles_bp, url_prefix='/api/roles')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
