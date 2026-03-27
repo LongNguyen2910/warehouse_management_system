@@ -9,16 +9,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 @transfer_bp.route('/transfers', methods=['GET'])
 def get_transfers():
-    """
-    Get all transfers
-    ---
-    tags:
-      - Transfers
-    responses:
-      200:
-        description: Success
-    """
-
     data = query_db("SELECT * FROM Transfer_Orders")
 
     return jsonify({
@@ -28,49 +18,6 @@ def get_transfers():
 
 @transfer_bp.route('/transfers', methods=['POST'])
 def create_transfer():
-    """
-    Create transfer order
-    ---
-    tags:
-      - Transfers
-    parameters:
-      - in: body
-        name: body
-        schema:
-          type: object
-          required:
-            - from_warehouse_id
-            - to_warehouse_id
-            - staff_id
-            - products
-          properties:
-            from_warehouse_id:
-              type: integer
-              example: 1
-            to_warehouse_id:
-              type: integer
-              example: 2
-            staff_id:
-              type: integer
-              example: 1
-            products:
-              type: array
-              items:
-                type: object
-                properties:
-                  product_id:
-                    type: integer
-                  quantity:
-                    type: integer
-    responses:
-      200:
-        description: Created
-      400:
-        description: Invalid input
-      404:
-        description: Not found
-    """
-
     data = request.json
     if not data:
         abort(400, "Invalid JSON")
@@ -79,14 +26,14 @@ def create_transfer():
     if not all(k in data for k in required):
         abort(400, "Missing fields")
 
-    # check warehouse tồn tại
+    # check kho tồn tại
     from_wh = query_db("SELECT * FROM Warehouses WHERE id=?", (data['from_warehouse_id'],), one=True)
     to_wh = query_db("SELECT * FROM Warehouses WHERE id=?", (data['to_warehouse_id'],), one=True)
 
     if not from_wh or not to_wh:
         abort(404, "Warehouse not found")
 
-    # tạo transfer
+    # tạo lệnh (status = PENDING)
     execute_db(
         """
         INSERT INTO Transfer_Orders (from_warehouse_id, to_warehouse_id, staff_id, status)
@@ -95,17 +42,14 @@ def create_transfer():
         (data['from_warehouse_id'], data['to_warehouse_id'], data['staff_id'])
     )
 
-    # lấy transfer id mới nhất
+    # lấy id mới nhất
     transfer = query_db("SELECT TOP 1 * FROM Transfer_Orders ORDER BY id DESC", one=True)
     transfer_id = transfer['id']
 
-    # xử lý từng sản phẩm
     for item in data['products']:
-
         product_id = item['product_id']
         qty = item['quantity']
 
-        # check tồn kho
         stock = query_db(
             "SELECT quantity FROM Inventory WHERE warehouse_id=? AND product_id=?",
             (data['from_warehouse_id'], product_id),
@@ -115,7 +59,7 @@ def create_transfer():
         if not stock or stock['quantity'] < qty:
             abort(400, f"Not enough stock for product {product_id}")
 
-        # trừ kho A
+        # TRỪ KHO
         execute_db(
             """
             UPDATE Inventory
@@ -125,7 +69,7 @@ def create_transfer():
             (qty, data['from_warehouse_id'], product_id)
         )
 
-        # insert chi tiết
+        # lưu chi tiết
         execute_db(
             """
             INSERT INTO Transfer_Details (transfer_id, product_id, quantity)
@@ -136,39 +80,22 @@ def create_transfer():
 
     return jsonify({
         "success": True,
-        "data": f"Transfer {transfer_id} created"
+        "data": {
+            "transfer_id": transfer_id,
+            "status": "PENDING"
+        }
     })
 
 @transfer_bp.route('/transfers/suggest', methods=['GET'])
 def suggest_warehouse():
-    """
-    Suggest best warehouse
-    ---
-    tags:
-      - Transfers
-    parameters:
-      - in: query
-        name: product_id
-        type: integer
-        required: true
-      - in: query
-        name: to_warehouse_id
-        type: integer
-        required: true
-    responses:
-      200:
-        description: Success
-      400:
-        description: Invalid input
-    """
 
-    product_id = request.args.get('product_id')
-    to_warehouse_id = request.args.get('to_warehouse_id')
+    # FIX: ép kiểu int
+    product_id = request.args.get('product_id', type=int)
+    to_warehouse_id = request.args.get('to_warehouse_id', type=int)
 
     if not product_id or not to_warehouse_id:
         abort(400, "Missing params")
 
-    # kho nhận
     target = query_db(
         "SELECT * FROM Warehouses WHERE id=?",
         (to_warehouse_id,),
@@ -197,7 +124,7 @@ def suggest_warehouse():
             target['Latitude'], target['Longitude']
         )
 
-        # score = khoảng cách - số lượng (ưu tiên gần + nhiều hàng)
+        # ưu tiên gần + nhiều hàng
         score = dist - inv['quantity'] * 0.01
 
         if best_score is None or score < best_score:
