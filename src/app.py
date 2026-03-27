@@ -73,7 +73,6 @@ def handle_exception(e):
 
             if match:
                 table_con = match.group(1)
-                table_cha = match.group(2)
                 friendly_message = f"Không thể xóa bản ghi này vì đang có dữ liệu liên kết tại bảng '{table_con}'."
             else:
                 friendly_message = "Không thể xóa do vi phạm ràng buộc dữ liệu liên quan."
