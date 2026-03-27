@@ -48,16 +48,8 @@ def query_db(query, args=(), one=False):
 
 def execute_db(query, args=()):
     conn = get_db_connection()
-    if conn is None: return False
-    
-    try:
-        cursor = conn.cursor()
-        cursor.execute(query, args)
-        conn.commit() 
-        return True
-    except Exception as e:
-        print(f"Error executing SQL: {e}")
-        conn.rollback() 
-        return False
-    finally:
-        conn.close()
+    cursor = conn.cursor()
+    cursor.execute(query, args)
+    conn.commit()
+    conn.close()
+    return True
