@@ -9,6 +9,15 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 @transfer_bp.route('/transfers', methods=['GET'])
 def get_transfers():
+    """
+    Get all transfers
+    ---
+    tags:
+      - Transfers
+    responses:
+      200:
+        description: Success
+    """
     data = query_db("SELECT * FROM Transfer_Orders")
 
     return jsonify({
@@ -18,6 +27,43 @@ def get_transfers():
 
 @transfer_bp.route('/transfers', methods=['POST'])
 def create_transfer():
+    """
+    Create transfer order
+    ---
+    tags:
+      - Transfers
+    parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          required:
+            - from_warehouse_id
+            - to_warehouse_id
+            - staff_id
+            - products
+          properties:
+            from_warehouse_id:
+              type: integer
+            to_warehouse_id:
+              type: integer
+            staff_id:
+              type: integer
+            products:
+              type: array
+              items:
+                type: object
+                properties:
+                  product_id:
+                    type: integer
+                  quantity:
+                    type: integer
+    responses:
+      200:
+        description: Created
+      400:
+        description: Invalid input
+    """
     data = request.json
     if not data:
         abort(400, "Invalid JSON")
@@ -88,7 +134,26 @@ def create_transfer():
 
 @transfer_bp.route('/transfers/suggest', methods=['GET'])
 def suggest_warehouse():
-
+    """
+    Suggest best warehouse
+    ---
+    tags:
+      - Transfers
+    parameters:
+      - in: query
+        name: product_id
+        type: integer
+        required: true
+      - in: query
+        name: to_warehouse_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Success
+      400:
+        description: Invalid input
+    """
     # FIX: ép kiểu int
     product_id = request.args.get('product_id', type=int)
     to_warehouse_id = request.args.get('to_warehouse_id', type=int)
