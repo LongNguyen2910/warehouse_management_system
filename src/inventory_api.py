@@ -2,80 +2,45 @@ from flask import Blueprint, request, jsonify, abort
 from db_helper import query_db, execute_db
 
 inventory_bp = Blueprint('inventory', __name__)
+# helper
+def get_inventory_by(warehouse_id=None, product_id=None):
+    query = "SELECT * FROM Inventory WHERE 1=1"
+    params = []
+
+    if warehouse_id is not None:
+        query += " AND warehouse_id=?"
+        params.append(warehouse_id)
+
+    if product_id is not None:
+        query += " AND product_id=?"
+        params.append(product_id)
+
+    return query_db(query, tuple(params))
 @inventory_bp.route('/inventory', methods=['GET'])
 def get_inventory():
     """
-    Get all inventory
-    ---
-    tags:
-      - Inventory
-    responses:
-        200:
-          description: List of inventory
-        500:
-          description: Database error
-    """
-    data = query_db("SELECT * FROM Inventory")
-
-    return jsonify({
-        "success": True,
-        "data": data
-    })
-@inventory_bp.route('/inventory/<int:warehouse_id>', methods=['GET'])
-def get_inventory_by_warehouse(warehouse_id):
-    """
-    Get inventory by warehouse
+    Get inventory (filter by warehouse_id, product_id)
     ---
     tags:
       - Inventory
     parameters:
-      - in: path
+      - in: query
         name: warehouse_id
         type: integer
-        required: true
+      - in: query
+        name: product_id
+        type: integer
     responses:
       200:
-        description: Inventory list
+        description: List of inventory
       404:
         description: No data found
     """
 
-    data = query_db(
-        "SELECT * FROM Inventory WHERE warehouse_id=?",
-        (warehouse_id,)
-    )
+    warehouse_id = request.args.get('warehouse_id', type=int)
+    product_id = request.args.get('product_id', type=int)
 
-    if not data:
-        abort(404, "No inventory found")
-
-    return jsonify({
-        "success": True,
-        "data": data
-    })
-# xem 1 sản phẩm
-@inventory_bp.route('/inventory/product/<int:product_id>', methods=['GET'])
-def get_product_inventory(product_id):
-    """
-    Get inventory by product
-    ---
-    tags:
-      - Inventory
-    parameters:
-      - in: path
-        name: product_id
-        type: integer
-        required: true
-    responses:
-      200:
-        description: Inventory list
-      404:
-        description: Not found
-    """
-
-    data = query_db(
-        "SELECT * FROM Inventory WHERE product_id=?",
-        (product_id,)
-    )
+    data = get_inventory_by(warehouse_id, product_id)
 
     if not data:
         abort(404, "No data found")
@@ -84,6 +49,7 @@ def get_product_inventory(product_id):
         "success": True,
         "data": data
     })
+
 @inventory_bp.route('/inventory/add', methods=['POST'])
 def add_inventory():
     """
