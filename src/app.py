@@ -127,5 +127,5 @@ def my_invalid_token_callback(err_str):
     }), 401
 
 
-if __name__ == '_main_':
+if __name__ == '__main__':
     app.run(debug=True)
