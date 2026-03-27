@@ -1,7 +1,12 @@
+import os
+import re
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flasgger import Swagger
+from flask_jwt_extended import JWTManager
 from werkzeug.exceptions import HTTPException
+import pyodbc
 
 from auth_api import auth_bp
 from inventory_api import inventory_bp
@@ -10,6 +15,9 @@ from reports_api import reports_bp
 from users_api import users_bp
 from roles_api import roles_bp
 
+from warehouses_api import warehouses_bp
+
+from product_api import products_bp
 app = Flask(__name__)
 
 CORS(app) 
@@ -26,7 +34,11 @@ app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
 app.register_blueprint(logistics_bp, url_prefix='/api/logistics')
 app.register_blueprint(reports_bp, url_prefix='/api/reports')    
 app.register_blueprint(users_bp, url_prefix='/api/users')   
-app.register_blueprint(roles_bp, url_prefix='/api/roles')  
+app.register_blueprint(roles_bp, url_prefix='/api/roles')
+app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
+app.register_blueprint(roles_bp, url_prefix='/api/roles')
+app.register_blueprint(products_bp, url_prefix='/api/products')
+app.register_blueprint(roles_bp, url_prefix='/api/roles')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -34,6 +46,9 @@ def handle_exception(e):
     # Use
     #   404: Not Found for resources that don't exist (e.g., invalid endpoint, missing product)
     #   400: Bad Request for invalid input data (e.g., missing required fields, invalid data types)
+    #   401: Unauthorized for authentication issues (e.g., missing/invalid token)
+    #   403: Forbidden for authorization issues (e.g., user role doesn't have permission to perform action)
+    #   409: Conflict for database constraint violations (e.g., trying to delete a warehouse that has inventory items linked to it)
     #   500: Internal Server Error for unexpected issues in the server code (e.g., database errors, unhandled exceptions)
     # Using abort() to catch HTTP exceptions
     # Example:
@@ -46,7 +61,24 @@ def handle_exception(e):
             "error_code": f"HTTP_{e.code}",
             "message": e.description,
         }), e.code
-    
+    if isinstance(e, pyodbc.Error):
+        error_msg = str(e)
+        if "547" in error_msg:
+            match = re.search(r'constraint "FK_([^_]+)_([^"]+)"', error_msg)
+
+            if match:
+                table_con = match.group(1)
+                table_cha = match.group(2)
+                friendly_message = f"Không thể xóa bản ghi này vì đang có dữ liệu liên kết tại bảng '{table_con}'."
+            else:
+                friendly_message = "Không thể xóa do vi phạm ràng buộc dữ liệu liên quan."
+
+        return jsonify({
+            "success": False,
+            "error_code": "DB_FOREIGN_KEY_CONFLICT",
+            "message": friendly_message
+        }), 409
+
     #Logic errors (in Python code) or unexpected exceptions
     response = {
         "success": False,
