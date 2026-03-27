@@ -202,13 +202,8 @@ def delete_role(id):
   if claims.get("role") != "ADMIN":
     abort(403, description="Bạn không có quyền thực hiện hành động này")
   dependency = query_db("SELECT id FROM Users WHERE role_id = ?", (id,), one=True)
-  if dependency:
-      abort(405, description="Không thể xóa vai trò này vì vẫn còn người dùng đang sử dụng vai trò này")
   existing = query_db("SELECT id FROM Roles WHERE id = ?", (id,), one=True)
   if not existing:
       abort(404, description="Vai trò không tồn tại")
   success = execute_db("DELETE FROM Roles WHERE id = ?", (id,))
-  if success:
-      return jsonify({"success": True, "message": "Vai trò đã được xóa"}), 200
-  else:
-      abort(500, description="Đã xảy ra lỗi khi xóa vai trò")
+  return jsonify({"success": True, "message": "Vai trò đã được xóa"}), 200
