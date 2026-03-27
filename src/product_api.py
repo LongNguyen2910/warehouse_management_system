@@ -297,21 +297,21 @@ def delete_product(id):
         abort(400, description="Sản phẩm không tồn tại")
 
     #Check product's infomation in other tables
-    dependencies = []
-    exist_logs = query_db('select * from Inventory_Logs where product_id = ?', (id,), one=True)
-    if exist_logs:
-        dependencies.append("Nhật ký Kho (Inventory_Logs)")
-    exist_inventory = query_db('select * from Inventory where product_id = ?', (id,), one=True)
-    if exist_inventory:
-        dependencies.append("Kho (Inventory)")
-    exist_receipt = query_db('select * from Receipt_Details where product_id = ?', (id,), one=True)
-    if exist_receipt:
-        dependencies.append("Chi tiết yêu cầu (Receipt_Details)")
-    exist_transfer = query_db('select * from Transfer_Details where product_id = ?', (id,), one=True)
-    if exist_transfer:
-        dependencies.append("Chi tiết giao hàng (Transfer_Details)")
-    if dependencies:
-        return jsonify({'message': f"Không thể xóa sản phẩm vì còn dữ liệu trong bảng khác", 'table_to_clean': dependencies}), 400
+    # dependencies = []
+    # exist_logs = query_db('select * from Inventory_Logs where product_id = ?', (id,), one=True)
+    # if exist_logs:
+    #     dependencies.append("Nhật ký Kho (Inventory_Logs)")
+    # exist_inventory = query_db('select * from Inventory where product_id = ?', (id,), one=True)
+    # if exist_inventory:
+    #     dependencies.append("Kho (Inventory)")
+    # exist_receipt = query_db('select * from Receipt_Details where product_id = ?', (id,), one=True)
+    # if exist_receipt:
+    #     dependencies.append("Chi tiết yêu cầu (Receipt_Details)")
+    # exist_transfer = query_db('select * from Transfer_Details where product_id = ?', (id,), one=True)
+    # if exist_transfer:
+    #     dependencies.append("Chi tiết giao hàng (Transfer_Details)")
+    # if dependencies:
+    #     return jsonify({'message': f"Không thể xóa sản phẩm vì còn dữ liệu trong bảng khác", 'table_to_clean': dependencies}), 400
 
     success = execute_db('DELETE FROM Products WHERE id = ?', (id,))
     if success:
