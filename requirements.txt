@@ -4,6 +4,5 @@ flasgger
 pyodbc
 python-dotenv
 flask-jwt-extended
-reportlab
-pandas
 openpyxl
+pandas
