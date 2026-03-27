@@ -9,8 +9,9 @@ CREATE TABLE Users (
     id INT PRIMARY KEY IDENTITY(1,1),
     username NVARCHAR(50) NOT NULL UNIQUE,
     password_hash NVARCHAR(255) NOT NULL,
-    role_id INT FOREIGN KEY REFERENCES Roles(id),
-    created_at DATETIME DEFAULT GETDATE()
+    role_id INT,
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Users_Roles FOREIGN KEY (role_id) REFERENCES Roles(id)
 );
 
 -- 3. Bảng Danh mục sản phẩm (Categories)
@@ -24,10 +25,11 @@ CREATE TABLE Products (
     id INT PRIMARY KEY IDENTITY(1,1),
     sku NVARCHAR(50) NOT NULL UNIQUE,
     name NVARCHAR(255) NOT NULL,
-    category_id INT FOREIGN KEY REFERENCES Categories(id),
+    category_id INT,
     min_stock INT DEFAULT 0,
     description NVARCHAR(MAX),
-    created_at DATETIME DEFAULT GETDATE()
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Products_Categories FOREIGN KEY (category_id) REFERENCES Categories(id)
 );
 
 -- 5. Bảng Kho hàng (Warehouses)
@@ -43,63 +45,76 @@ CREATE TABLE Warehouses (
 -- 6. Bảng Tồn kho hiện tại (Inventory)
 CREATE TABLE Inventory (
     id INT PRIMARY KEY IDENTITY(1,1),
-    warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
-    product_id INT FOREIGN KEY REFERENCES Products(id),
+    warehouse_id INT,
+    product_id INT,
     quantity INT NOT NULL DEFAULT 0,
     CONSTRAINT CHK_Inventory_Quantity CHECK (quantity >= 0),
-    CONSTRAINT UQ_Warehouse_Product UNIQUE (warehouse_id, product_id)
+    CONSTRAINT UQ_Warehouse_Product UNIQUE (warehouse_id, product_id),
+    CONSTRAINT FK_Inventory_Warehouses FOREIGN KEY (warehouse_id) REFERENCES Warehouses(id),
+    CONSTRAINT FK_Inventory_Products FOREIGN KEY (product_id) REFERENCES Products(id)
 );
 
 -- 7. Bảng Phiếu Nhập/Xuất (Receipts)
 CREATE TABLE Receipts (
     id INT PRIMARY KEY IDENTITY(1,1),
     type NVARCHAR(10) CHECK (type IN ('INBOUND', 'OUTBOUND')),
-    warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
-    staff_id INT FOREIGN KEY REFERENCES Users(id),
+    warehouse_id INT,
+    staff_id INT,
     partner_name NVARCHAR(255),
-    created_at DATETIME DEFAULT GETDATE()
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_Receipts_Warehouses FOREIGN KEY (warehouse_id) REFERENCES Warehouses(id),
+    CONSTRAINT FK_Receipts_Users FOREIGN KEY (staff_id) REFERENCES Users(id)
 );
 
 -- 8. Chi tiết phiếu Nhập/Xuất (Receipt_Details)
 CREATE TABLE Receipt_Details (
-    id INT PRIMARY KEY IDENTITY(1,1), -- Thêm ID tự tăng
-    receipt_id INT FOREIGN KEY REFERENCES Receipts(id),
-    product_id INT FOREIGN KEY REFERENCES Products(id),
+    id INT PRIMARY KEY IDENTITY(1,1),
+    receipt_id INT,
+    product_id INT,
     quantity INT NOT NULL CHECK (quantity > 0),
     price DECIMAL(18, 2),
-    CONSTRAINT UQ_Receipt_Product UNIQUE (receipt_id, product_id)
+    CONSTRAINT UQ_Receipt_Product UNIQUE (receipt_id, product_id),
+    CONSTRAINT FK_ReceiptDetails_Receipts FOREIGN KEY (receipt_id) REFERENCES Receipts(id) ON DELETE CASCADE,
+    CONSTRAINT FK_ReceiptDetails_Products FOREIGN KEY (product_id) REFERENCES Products(id)
 );
 
 -- 9. Lệnh điều chuyển (Transfer_Orders)
 CREATE TABLE Transfer_Orders (
     id INT PRIMARY KEY IDENTITY(1,1),
-    from_warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
-    to_warehouse_id INT FOREIGN KEY REFERENCES Warehouses(id),
-    staff_id INT FOREIGN KEY REFERENCES Users(id),
+    from_warehouse_id INT,
+    to_warehouse_id INT,
+    staff_id INT,
     status NVARCHAR(20) DEFAULT 'PENDING' 
         CHECK (status IN ('PENDING', 'APPROVED', 'SHIPPING', 'COMPLETED', 'CANCELLED')),
-    created_at DATETIME DEFAULT GETDATE()
+    created_at DATETIME DEFAULT GETDATE(),
+    -- Trường hợp trùng bảng đích (Warehouses) thì thêm số 1, 2
+    CONSTRAINT FK_TransferOrders_Warehouses_1 FOREIGN KEY (from_warehouse_id) REFERENCES Warehouses(id),
+    CONSTRAINT FK_TransferOrders_Warehouses_2 FOREIGN KEY (to_warehouse_id) REFERENCES Warehouses(id),
+    CONSTRAINT FK_TransferOrders_Users FOREIGN KEY (staff_id) REFERENCES Users(id)
 );
 
 -- 10. Chi tiết lệnh điều chuyển (Transfer_Details)
 CREATE TABLE Transfer_Details (
     id INT PRIMARY KEY IDENTITY(1,1),
-    transfer_id INT FOREIGN KEY REFERENCES Transfer_Orders(id),
-    product_id INT FOREIGN KEY REFERENCES Products(id),
+    transfer_id INT,
+    product_id INT,
     quantity INT NOT NULL CHECK (quantity > 0),
-    CONSTRAINT UQ_Transfer_Product UNIQUE (transfer_id, product_id)
+    CONSTRAINT UQ_Transfer_Product UNIQUE (transfer_id, product_id),
+    CONSTRAINT FK_TransferDetails_TransferOrders FOREIGN KEY (transfer_id) REFERENCES Transfer_Orders(id) ON DELETE CASCADE,
+    CONSTRAINT FK_TransferDetails_Products FOREIGN KEY (product_id) REFERENCES Products(id)
 );
 
 -- 11. Thông tin giao hàng (Shipments)
 CREATE TABLE Shipments (
     id INT PRIMARY KEY IDENTITY(1,1),
-    transfer_id INT FOREIGN KEY REFERENCES Transfer_Orders(id),
+    transfer_id INT,
     driver_name NVARCHAR(100),
     license_plate NVARCHAR(20),
     status NVARCHAR(20) DEFAULT 'PICKING'
         CHECK (status IN ('PICKING', 'SHIPPING', 'DELIVERED')),
     expected_delivery_at DATETIME,
-    actual_delivery_at DATETIME
+    actual_delivery_at DATETIME,
+    CONSTRAINT FK_Shipments_TransferOrders FOREIGN KEY (transfer_id) REFERENCES Transfer_Orders(id)
 );
 
 -- 12. Nhật ký tồn kho (Inventory_Logs)
@@ -110,5 +125,7 @@ CREATE TABLE Inventory_Logs (
     change_amount INT,
     action_type NVARCHAR(20),
     reference_id INT,
-    created_at DATETIME DEFAULT GETDATE()
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_InventoryLogs_Products FOREIGN KEY (product_id) REFERENCES Products(id),
+    CONSTRAINT FK_InventoryLogs_Warehouses FOREIGN KEY (warehouse_id) REFERENCES Warehouses(id)
 );
