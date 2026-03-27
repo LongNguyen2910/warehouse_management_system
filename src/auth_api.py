@@ -69,19 +69,22 @@ def login():
         abort(401, description="Tên đăng nhập hoặc mật khẩu không đúng")
 
     if user and check_password_hash(user['password_hash'], password):
-    # 2. Nếu đúng, tạo Access Token
-    # Chúng ta giấu 'role' vào trong identity hoặc claims để sau này kiểm tra quyền
-        access_token = create_access_token(
-            identity=str(user['id']), 
-            additional_claims={"role": user['role_name'], "username": user['username']}
-        )
-        
-        return jsonify({
-            "success": True,
-            "message": "Đăng nhập thành công",
-            "access_token": access_token,
-            "user_info": {
-                "username": user['username'],
-                "role": user['role_name']
-            }
-        }), 200
+      # 2. Nếu đúng, tạo Access Token
+      # Chúng ta giấu 'role' vào trong identity hoặc claims để sau này kiểm tra quyền
+      access_token = create_access_token(
+        identity=str(user['id']), 
+        additional_claims={"role": user['role_name'], "username": user['username']}
+      )
+
+      return jsonify({
+        "success": True,
+        "message": "Đăng nhập thành công",
+        "access_token": access_token,
+        "user_info": {
+          "username": user['username'],
+          "role": user['role_name']
+        }
+      }), 200
+
+    # Nếu mật khẩu sai (user tồn tại nhưng check_password_hash trả về False)
+    abort(401, description="Tên đăng nhập hoặc mật khẩu không đúng")
