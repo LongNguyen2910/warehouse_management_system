@@ -1,10 +1,5 @@
 from flask import Blueprint, abort, jsonify
 import flask
-from werkzeug.security import generate_password_hash
-from db_helper import execute_db, query_db
-from validate_helper import is_empty, validate_password_strength
-from flask import Blueprint, abort, jsonify
-import flask
 from flask_jwt_extended import get_jwt, jwt_required
 from werkzeug.security import generate_password_hash
 from db_helper import execute_db, query_db
