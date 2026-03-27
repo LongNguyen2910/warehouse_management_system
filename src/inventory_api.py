@@ -250,3 +250,71 @@ def update_product(id):
         return jsonify({'success': 'Thành công', 'message': 'THông tin sản phẩm đã đuọc cập nhật'}) , 200
     else:
         abort(500, description="Đã xảy ra lỗi khi cập nhật thông tin sản phẩm")
+
+@inventory_bp.route('/products/<int:id>', methods=['DELETE'])
+def delete_product(id):
+    """
+        API Xóa thông tin sản phẩm
+        ---
+        tags:
+          - Products
+        parameters:
+          - name: id
+            in: path
+            type: integer
+            required: true
+            description: ID của sản phẩm cần xóa
+        responses:
+          200:
+            description: Xóa sản phẩm thành công
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Thông tin sản phẩm đã được xóa"
+          400:
+            description: Không thể xóa do sản phẩm không tồn tại hoặc có dữ liệu ràng buộc ở bảng khác
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "Không thể xóa sản phẩm vì còn dữ liệu trong bảng khác"
+                table_to_clean:
+                  type: array
+                  items:
+                    type: string
+                  example: ["Nhật ký Kho (Inventory_Logs)", "Kho (Inventory)"]
+          500:
+            description: "Đã xảy ra lỗi hệ thống khi xóa thông tin sản phẩm"
+        """
+    exist_product = query_db('select id from Products where id = ?', (id,), one=True)
+    if exist_product is None:
+        abort(400, description="Sản phẩm không tồn tại")
+
+    #Check product's infomation in other tables
+    dependencies = []
+    exist_logs = query_db('select * from Inventory_Logs where product_id = ?', (id,), one=True)
+    if exist_logs:
+        dependencies.append("Nhật ký Kho (Inventory_Logs)")
+    exist_inventory = query_db('select * from Inventory where product_id = ?', (id,), one=True)
+    if exist_inventory:
+        dependencies.append("Kho (Inventory)")
+    exist_receipt = query_db('select * from Receipt_Details where product_id = ?', (id,), one=True)
+    if exist_receipt:
+        dependencies.append("Chi tiết yêu cầu (Receipt_Details)")
+    exist_transfer = query_db('select * from Transfer_Details where product_id = ?', (id,), one=True)
+    if exist_transfer:
+        dependencies.append("Chi tiết giao hàng (Transfer_Details)")
+    if dependencies:
+        return jsonify({'message': f"Không thể xóa sản phẩm vì còn dữ liệu trong bảng khác", 'table_to_clean': dependencies}), 400
+
+    success = execute_db('DELETE FROM Products WHERE id = ?', (id,))
+    if success:
+        return jsonify({'success': True, 'message': 'Thông tin sản phẩm đã được xóa'}) ,200
+    else:
+        abort(500, description="Đã xảy ra lỗi khi xóa thông tin sản phẩm")
