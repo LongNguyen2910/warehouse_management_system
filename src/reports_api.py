@@ -40,7 +40,7 @@ def getLowStock():
                 FROM Products p
                          LEFT JOIN Inventory i ON p.id = i.product_id
                 GROUP BY p.id, p.name, p.min_stock
-                HAVING ISNULL(SUM(i.quantity), 0) <= p.min_stock \
+                HAVING ISNULL(SUM(i.quantity), 0) <= p.min_stock 
                 """
         results = query_db(query)
         return flask.jsonify(results), 200
@@ -100,11 +100,39 @@ def getTransferHistory():
         return flask.jsonify(results), 200
     except Exception as e:
         return {"error": str(e)}, 500
+
+@reports_bp.route('/receipt', methods=['GET'])
+def getReceiptHistory():
+    try:
+        query = """ 
+SELECT
+    r.id AS receipt_id,
+    r.type,
+    w.name AS warehouse_name,
+    p.sku,
+    p.name AS product_name,
+    rd.quantity,
+    rd.price,
+    (rd.quantity * rd.price) AS total_value,
+    ISNULL(u.username, 'System') AS staff,
+    r.partner_name,
+    r.created_at
+FROM Receipts r
+JOIN Receipt_Details rd ON r.id = rd.receipt_id
+JOIN Products p ON rd.product_id = p.id
+JOIN Warehouses w ON r.warehouse_id = w.id
+LEFT JOIN Users u ON r.staff_id = u.id
+ORDER BY r.created_at DESC
+        """
+        results = query_db(query)
+        return flask.jsonify(results), 200
+    except Exception as e:
+        return {"error": str(e)}, 500
 @reports_bp.route('/export/excel', methods=['GET'])
 def export():
     try:
         output = io.BytesIO()
-        #TỒN KHO
+        #Ton Kho
         query1 = """
                  SELECT
                      w.name AS warehouse,
@@ -118,7 +146,7 @@ def export():
                  """
         data1 = query_db(query1)
         df1 = pd.DataFrame(data1)
-        #LOW STOCK
+        #Low-stock
         query2 = """
                  SELECT
                      p.id AS product_id,
@@ -133,7 +161,7 @@ def export():
                  """
         data2 = query_db(query2)
         df2 = pd.DataFrame(data2)
-        #HISTORY
+        #In and out
         query3 = """
                  SELECT TOP 100 p.sku, 
                                 p.name AS product_name,
@@ -149,7 +177,7 @@ def export():
                  """
         data3 = query_db(query3)
         df3 = pd.DataFrame(data3)
-        # TRANSFER HISTORY
+        #Transfer
         query4 = """
                  SELECT p.sku, 
                         p.name AS product_name, 
@@ -169,18 +197,42 @@ def export():
                  """
         data4 = query_db(query4)
         df4 = pd.DataFrame(data4)
+        #Receipts
+        query5 = """
+                SELECT r.id AS receipt_id,
+                        r.type,
+                        w.name AS warehouse_name,
+                        p.sku,
+                        p.name AS product_name,
+                        rd.quantity,
+                        rd.price,
+                        (rd.quantity * rd.price) AS total_value,
+                        ISNULL(u.username, 'System') AS staff,
+                        r.partner_name,
+                        r.created_at
+                FROM Receipts r
+                            JOIN Receipt_Details rd ON r.id = rd.receipt_id
+                            JOIN Products p ON rd.product_id = p.id
+                            JOIN Warehouses w ON r.warehouse_id = w.id
+                            LEFT JOIN Users u ON r.staff_id = u.id
+                ORDER BY r.created_at DESC
+                 """
+        data5 = query_db(query5)
+        df5 = pd.DataFrame(data5)
         #Excel
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df1.to_excel(writer, sheet_name='TonKho', index=False)
             df2.to_excel(writer, sheet_name='LowStock', index=False)
             df3.to_excel(writer, sheet_name='History', index=False)
             df4.to_excel(writer, sheet_name='Transfer', index=False)
+            df5.to_excel(writer, sheet_name='Receipts', index=False)
 
             for sheet_name, df in {
                 'TonKho': df1,
                 'LowStock': df2,
                 'History': df3,
-                'Transfer': df4
+                'Transfer': df4,
+                'Receipts': df5
             }.items():
                 worksheet = writer.sheets[sheet_name]
                 for col_idx, col in enumerate(df.columns, 1):
