@@ -102,6 +102,7 @@ def get_users():
                   example: 1
                 role_name:
                   type: string
+                  enum: ["MANAGER", "STAFF", "ADMIN", "DELIVERY MAN"]
                   example: "ADMIN"
                 username:
                   type: string

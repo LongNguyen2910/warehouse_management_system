@@ -8,6 +8,17 @@ VALID_STATUS = ["PICKING", "SHIPPING", "DELIVERED"]
 
 @logistics_bp.route('/shipments', methods=['GET'])
 def get_shipments():
+    """
+    Get all shipments
+    ---
+    tags:
+      - Shipments
+    responses:
+      200:
+        description: List of shipments
+      500:
+        description: Database error
+    """
     shipments = query_db("SELECT * FROM Shipments")
 
     return jsonify({
@@ -17,6 +28,45 @@ def get_shipments():
 
 @logistics_bp.route('/shipments', methods=['POST'])
 def create_shipment():
+    """
+    Create shipment
+    ---
+    tags:
+      - Shipments
+    parameters:
+      - in: body
+        name: body
+        schema:
+          type: object
+          required:
+            - transfer_id
+            - driver_name
+            - license_plate
+            - expected_delivery_at
+          properties:
+            transfer_id:
+              type: integer
+              example: 1
+            driver_name:
+              type: string
+              example: "Nguyen Van A"
+            license_plate:
+              type: string
+              example: "51A-12345"
+            expected_delivery_at:
+              type: string
+              format: date-time
+              example: "2026-03-26T10:00:00"
+    responses:
+      200:
+        description: Shipment created
+      400:
+        description: Invalid input
+      404:
+        description: Transfer not found
+      500:
+        description: Create failed
+    """
     data = request.json
     if not data:
         abort(400, "Invalid JSON")
@@ -61,6 +111,41 @@ def create_shipment():
 
 @logistics_bp.route('/shipments/<int:id>', methods=['PUT'])
 def update_shipment(id):
+    """
+    Update shipment
+    ---
+    tags:
+      - Shipments
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: ["PICKING", "SHIPPING", "DELIVERED"]
+              example: "DELIVERED"
+            driver_name:
+              type: string
+              example: "Tran Van B"
+            license_plate:
+              type: string
+              example: "51B-67890"
+    responses:
+      200:
+        description: Updated
+      400:
+        description: Invalid input
+      404:
+        description: Not found
+      500:
+        description: Update failed
+    """
     data = request.json
     if not data:
         abort(400, "Invalid JSON")
@@ -162,7 +247,24 @@ def update_shipment(id):
 
 @logistics_bp.route('/shipments/<int:id>', methods=['DELETE'])
 def delete_shipment(id):
-
+    """
+    Delete shipment
+    ---
+    tags:
+      - Shipments
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Deleted
+      404:
+        description: Not found
+      500:
+        description: Delete failed
+    """
     shipment = query_db(
         "SELECT * FROM Shipments WHERE id=?",
         (id,),
