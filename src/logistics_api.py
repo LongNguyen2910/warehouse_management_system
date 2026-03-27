@@ -1,10 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, abort
 from db_helper import query_db, execute_db
 from datetime import datetime
 
 logistics_bp = Blueprint('logistics', __name__)
 
 VALID_STATUS = ["PICKING", "SHIPPING", "DELIVERED"]
+
+# GET
 @logistics_bp.route('/shipments', methods=['GET'])
 def get_shipments():
     """
@@ -18,12 +20,16 @@ def get_shipments():
       500:
         description: Database error
     """
-    try:
-        shipments = query_db("SELECT * FROM Shipments")
-        return jsonify(shipments)
-    except:
-        return jsonify({"error": "Database error"}), 500
 
+    shipments = query_db("SELECT * FROM Shipments")
+
+    return jsonify({
+        "success": True,
+        "data": shipments
+    })
+
+
+# POST
 @logistics_bp.route('/shipments', methods=['POST'])
 def create_shipment():
     """
@@ -44,12 +50,13 @@ def create_shipment():
           properties:
             transfer_id:
               type: integer
-              description: Mã vận chuyển
               example: 1
             driver_name:
               type: string
+              example: "Nguyen Van A"
             license_plate:
               type: string
+              example: "51A-12345"
             expected_delivery_at:
               type: string
               format: date-time
@@ -58,22 +65,32 @@ def create_shipment():
       200:
         description: Shipment created
       400:
-        description: Missing or invalid input
+        description: Invalid input
+      404:
+        description: Transfer not found
       500:
-        description: Failed to create shipment
+        description: Create failed
     """
 
     data = request.json
+    if not data:
+        abort(400, "Invalid JSON")
 
-    # validate input
-    if not all(k in data for k in ("transfer_id", "driver_name", "license_plate", "expected_delivery_at")):
-        return jsonify({"error": "Missing input"}), 400
+    required = ["transfer_id", "driver_name", "license_plate", "expected_delivery_at"]
+    if not all(k in data for k in required):
+        abort(400, "Missing fields")
 
-    # validate datetime
-    try:
-        expected_time = datetime.fromisoformat(data['expected_delivery_at'])
-    except:
-        return jsonify({"error": "Invalid datetime format"}), 400
+    # check transfer_id
+    transfer = query_db(
+        "SELECT * FROM Transfer_Orders WHERE id=?",
+        (data['transfer_id'],),
+        one=True
+    )
+
+    if not transfer:
+        abort(404, "Transfer not found")
+
+    expected_time = datetime.fromisoformat(data['expected_delivery_at'])
 
     success = execute_db(
         """
@@ -90,14 +107,19 @@ def create_shipment():
     )
 
     if not success:
-        return jsonify({"error": "Create shipment failed"}), 500
+        abort(500, "Create failed")
 
-    return jsonify({"message": "Shipment created"})
+    return jsonify({
+        "success": True,
+        "data": "Shipment created"
+    })
 
+
+# PUT
 @logistics_bp.route('/shipments/<int:id>', methods=['PUT'])
 def update_shipment(id):
     """
-    Update shipment status
+    Update shipment
     ---
     tags:
       - Shipments
@@ -110,33 +132,32 @@ def update_shipment(id):
         name: body
         schema:
           type: object
-          required:
-            - status
           properties:
             status:
               type: string
               enum: [PICKING, SHIPPING, DELIVERED]
+              example: "DELIVERED"
+            driver_name:
+              type: string
+              example: "Tran Van B"
+            license_plate:
+              type: string
+              example: "51B-67890"
     responses:
       200:
-        description: Shipment updated successfully
+        description: Updated
       400:
-        description: Invalid status
+        description: Invalid input
       404:
-        description: Shipment not found
+        description: Not found
       500:
         description: Update failed
     """
 
     data = request.json
     if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
-    status = data.get("status")
+        abort(400, "Invalid JSON")
 
-    # validate status
-    if status not in VALID_STATUS:
-        return jsonify({"error": "Invalid status"}), 400
-
-    # check shipment tồn tại
     shipment = query_db(
         "SELECT * FROM Shipments WHERE id=?",
         (id,),
@@ -144,49 +165,65 @@ def update_shipment(id):
     )
 
     if not shipment:
-        return jsonify({"error": "Shipment not found"}), 404
+        abort(404, "Shipment not found")
 
-    # update status
+    status = data.get("status")
+    driver_name = data.get("driver_name")
+    license_plate = data.get("license_plate")
+
+    if status and status not in VALID_STATUS:
+        abort(400, "Invalid status")
+
+    fields = []
+    values = []
+
+    if status:
+        fields.append("status=?")
+        values.append(status)
+
+    if driver_name:
+        fields.append("driver_name=?")
+        values.append(driver_name)
+
+    if license_plate:
+        fields.append("license_plate=?")
+        values.append(license_plate)
+
+    if not fields:
+        abort(400, "No data to update")
+
+    # DELIVERED → thêm thời gian
+    if status == "DELIVERED":
+        fields.append("actual_delivery_at=?")
+        values.append(datetime.now())
+
+    values.append(id)
+
     success = execute_db(
-        "UPDATE Shipments SET status=? WHERE id=?",
-        (status, id)
+        f"UPDATE Shipments SET {', '.join(fields)} WHERE id=?",
+        tuple(values)
     )
 
     if not success:
-        return jsonify({"error": "Update failed"}), 500
+        abort(500, "Update failed")
 
-    late = False
+    # cộng kho
     if status == "DELIVERED":
 
-        now = datetime.now()
-
-        # 1. update actual_delivery_at
-        success = execute_db(
-            "UPDATE Shipments SET status=?, actual_delivery_at=? WHERE id=?",
-            (status, now, id)
-        )
-
-        # 2. check late
-        if shipment.get("expected_delivery_at"):
-            if now > shipment["expected_delivery_at"]:
-                late = True
-
-        # 3. lấy transfer
         transfer = query_db(
             "SELECT * FROM Transfer_Orders WHERE id=?",
             (shipment['transfer_id'],),
             one=True
         )
-        if not transfer:
-            return jsonify({"error": "Transfer not found"}), 404
 
-        # 4. lấy danh sách sản phẩm
+        if not transfer:
+            abort(404, "Transfer not found")
+
         details = query_db(
             "SELECT * FROM Transfer_Details WHERE transfer_id=?",
             (shipment['transfer_id'],)
         )
 
-        # 5. cộng kho đích
         for item in details:
             execute_db(
                 """
@@ -196,21 +233,53 @@ def update_shipment(id):
                 """,
                 (item['quantity'], transfer['to_warehouse_id'], item['product_id'])
             )
-            execute_db(
-                """
-                INSERT INTO Inventory_Logs
-                    (product_id, warehouse_id, change_amount, action_type, reference_id)
-                VALUES (?, ?, ?, 'TRANSFER_IN', ?)
-                """,
-                (item['product_id'], transfer['to_warehouse_id'], item['quantity'], transfer['id'])
-            )
-    else:
-        success = execute_db(
-            "UPDATE Shipments SET status=? WHERE id=?",
-            (status, id)
-        )
 
     return jsonify({
-        "message": "Shipment updated successfully",
-        "late": late
+        "success": True,
+        "data": "Shipment updated"
+    })
+
+
+# DELETE
+@logistics_bp.route('/shipments/<int:id>', methods=['DELETE'])
+def delete_shipment(id):
+    """
+    Delete shipment
+    ---
+    tags:
+      - Shipments
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Deleted
+      404:
+        description: Not found
+      500:
+        description: Delete failed
+    """
+
+    shipment = query_db(
+        "SELECT * FROM Shipments WHERE id=?",
+        (id,),
+        one=True
+    )
+
+    if not shipment:
+        abort(404, "Shipment not found")
+
+    success = execute_db(
+        "DELETE FROM Shipments WHERE id=?",
+        (id,)
+    )
+
+    if not success:
+        abort(500, "Delete failed")
+
+    return jsonify({
+        "success": True,
+        "data": "Shipment deleted"
     })
