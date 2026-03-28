@@ -72,7 +72,7 @@ def handle_exception(e):
         error_msg = str(e)
         if "547" in error_msg:
             match = re.search(r'constraint "FK_([^_]+)_([^"]+)"', error_msg)
-            
+
             if match:
                 table_con = match.group(1)
                 friendly_message = f"Không thể xóa bản ghi này vì đang có dữ liệu liên kết tại bảng '{table_con}'."
