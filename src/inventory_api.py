@@ -1,5 +1,3 @@
-from pydoc import describe
-
 from flask import Blueprint, jsonify, request, abort
 
 import db_helper
@@ -315,5 +313,325 @@ def outbound():
 
     return jsonify({"success": True, "message": "Đã thêm thông tin phiếu xuất thành công"}), 200
 
+@inventory_bp.route("/", methods=["GET"])
+def get_inventory():
+    """
+        API Lấy danh sách toàn bộ phiếu kèm chi tiết hàng hóa
+        ---
+        tags:
+          - Inventory
+        responses:
+          200:
+            description: Danh sách các phiếu đã được nhóm theo ID
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: {type: integer}
+                  type: {type: string}
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product_name: {type: string}
+                        quantity: {type: integer}
+        """
+
+    sql = """
+          SELECT r.id       as receipt_id, \
+                 r.type, \
+                 r.partner_name, \
+                 r.created_at, \
+                 w.name     as warehouse_name, \
+                 u.username as staff_name, \
+                 p.name     as product_name, \
+                 p.sku, \
+                 rd.quantity, \
+                 rd.price
+          FROM Receipts r
+                   JOIN Warehouses w ON r.warehouse_id = w.id
+                   JOIN Users u ON r.staff_id = u.id
+                   JOIN Receipt_Details rd ON r.id = rd.receipt_id
+                   JOIN Products p ON rd.product_id = p.id
+          ORDER BY r.created_at DESC \
+          """
+
+    raw_data = query_db(sql)
+
+    receipts_dict = {}
+
+    for row in raw_data:
+        r_id = row['receipt_id']
+
+        if r_id not in receipts_dict:
+            receipts_dict[r_id] = {
+                "id": r_id,
+                "type": row['type'],
+                "warehouse_name": row['warehouse_name'],
+                "staff_name": row['staff_name'],
+                "partner_name": row['partner_name'],
+                "created_at": row['created_at'],
+                "items": []
+            }
+
+        receipts_dict[r_id]['items'].append({
+            "product_name": row['product_name'],
+            "sku": row['sku'],
+            "quantity": row['quantity'],
+            "price": row['price'],
+            "total_price": row['quantity'] * row['price']
+        })
+
+    # 3. Chuyển từ Dictionary sang List để trả về JSON
+    final_result = list(receipts_dict.values())
+
+    return jsonify(final_result), 200
+
+
+@inventory_bp.route('/<int:id>', methods=['GET'])
+def get_receipt_by_id(id):
+    """
+        API Lấy chi tiết một phiếu bất kỳ theo ID
+        ---
+        tags:
+          - Inventory
+        parameters:
+          - name: id
+            in: path
+            type: integer
+            required: true
+            description: ID của phiếu nhập hoặc xuất
+        responses:
+          200:
+            description: Thông tin chi tiết của phiếu tìm thấy
+            schema:
+              type: object
+              properties:
+                id: {type: integer}
+                type: {type: string}
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product: {type: string}
+                      qty: {type: integer}
+          404:
+            description: Không tìm thấy ID phiếu này trong hệ thống
+        """
+    sql = """
+          SELECT r.id, \
+                 r.type, \
+                 r.partner_name, \
+                 r.created_at,
+                 w.name     as warehouse_name, \
+                 u.username as staff_name,
+                 p.name     as product_name, \
+                 p.sku, \
+                 rd.quantity, \
+                 rd.price
+          FROM Receipts r
+                   JOIN Warehouses w ON r.warehouse_id = w.id
+                   JOIN Users u ON r.staff_id = u.id
+                   JOIN Receipt_Details rd ON r.id = rd.receipt_id
+                   JOIN Products p ON rd.product_id = p.id
+          WHERE r.id = ? \
+          """
+    rows = query_db(sql, (id,))
+
+    if not rows:
+        abort(404, description="Không tìm thấy phiếu")
+
+    # Dùng Dict để gom: Vì chỉ có 1 ID nên ta chỉ cần 1 biến dict duy nhất
+    receipt = {
+        "id": rows[0]['id'],
+        "type": rows[0]['type'],
+        "warehouse": rows[0]['warehouse_name'],
+        "staff": rows[0]['staff_name'],
+        "partner": rows[0]['partner_name'],
+        "items": []  # Đây là nơi chứa danh sách sản phẩm
+    }
+
+    for row in rows:
+        receipt['items'].append({
+            "product": row['product_name'],
+            "qty": row['quantity'],
+            "price": row['price']
+        })
+
+    # Ở đây không cần .values() vì ta chỉ trả về 1 Object {}, không phải 1 mảng []
+    return jsonify(receipt), 200
+
+
+@inventory_bp.route('/inbound', methods=['GET'])
+def get_inbound_receipts():
+    """
+        API Lấy danh sách toàn bộ Phiếu Nhập kèm chi tiết hàng hóa
+        ---
+        tags:
+          - Inventory
+        responses:
+          200:
+            description: Danh sách các phiếu nhập hiện có trong hệ thống
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 10
+                  warehouse:
+                    type: string
+                    example: "Kho Tổng A"
+                  staff:
+                    type: string
+                    example: "admin_tung"
+                  partner:
+                    type: string
+                    example: "Công ty PepsiCo"
+                  created_at:
+                    type: string
+                    example: "2024-03-20 14:30:00"
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product:
+                          type: string
+                          example: "Pepsi Lon 330ml"
+                        sku:
+                          type: string
+                          example: "P001"
+                        qty:
+                          type: integer
+                          example: 50
+                        price:
+                          type: number
+                          example: 5500.0
+        """
+    # 1. SQL JOIN lấy tất cả thông tin liên quan, lọc theo INBOUND
+    sql = """
+          SELECT r.id       as receipt_id, \
+                 r.partner_name, \
+                 r.created_at, \
+                 w.name     as warehouse_name, \
+                 u.username as staff_name, \
+                 p.name     as product_name, \
+                 p.sku, \
+                 rd.quantity, \
+                 rd.price
+          FROM Receipts r
+                   JOIN Warehouses w ON r.warehouse_id = w.id
+                   JOIN Users u ON r.staff_id = u.id
+                   JOIN Receipt_Details rd ON r.id = rd.receipt_id
+                   JOIN Products p ON rd.product_id = p.id
+          WHERE r.type = 'INBOUND'
+          ORDER BY r.created_at DESC \
+          """
+    raw_data = query_db(sql)
+
+    # 2. Dùng Dictionary để nhóm sản phẩm vào từng Phiếu Nhập
+    inbound_dict = {}
+
+    for row in raw_data:
+        rid = row['receipt_id']
+        if rid not in inbound_dict:
+            inbound_dict[rid] = {
+                "id": rid,
+                "warehouse": row['warehouse_name'],
+                "staff": row['staff_name'],
+                "partner": row['partner_name'],
+                "created_at": row['created_at'],
+                "items": []  # Danh sách sản phẩm của phiếu này
+            }
+
+        # Thêm sản phẩm vào mảng items của phiếu tương ứng
+        inbound_dict[rid]['items'].append({
+            "product": row['product_name'],
+            "sku": row['sku'],
+            "qty": row['quantity'],
+            "price": row['price']
+        })
+
+    # 3. Trả về phần Giá trị (List các phiếu) cho jsonify
+    # jsonify tự biết lấy các Key (id, warehouse, items...) để tạo JSON Object
+    return jsonify(list(inbound_dict.values())), 200
+
+
+@inventory_bp.route('/receipts/outbound', methods=['GET'])
+def get_outbound_receipts():
+    """
+        API Lấy danh sách toàn bộ Phiếu Xuất kèm chi tiết hàng hóa
+        ---
+        tags:
+          - Inventory
+        responses:
+          200:
+            description: Danh sách các phiếu xuất (Outbound)
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: {type: integer}
+                  warehouse: {type: string}
+                  customer: {type: string}
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        product: {type: string}
+                        qty: {type: integer}
+                        total: {type: number}
+        """
+    sql = """
+          SELECT r.id, \
+                 r.partner_name, \
+                 r.created_at, \
+                 w.name     as warehouse_name, \
+                 u.username as staff_name, \
+                 p.name     as product_name, \
+                 p.sku, \
+                 rd.quantity, \
+                 rd.price
+          FROM Receipts r
+                   JOIN Warehouses w ON r.warehouse_id = w.id
+                   JOIN Users u ON r.staff_id = u.id
+                   JOIN Receipt_Details rd ON r.id = rd.receipt_id
+                   JOIN Products p ON rd.product_id = p.id
+          WHERE r.type = 'OUTBOUND'
+          ORDER BY r.created_at DESC \
+          """
+    raw_data = query_db(sql)
+
+    # Gom nhóm bằng Dictionary
+    outbound_dict = {}
+    for row in raw_data:
+        rid = row['id']
+        if rid not in outbound_dict:
+            outbound_dict[rid] = {
+                "id": rid,
+                "warehouse": row['warehouse_name'],
+                "staff": row['staff_name'],
+                "customer": row['partner_name'],  # Đối với phiếu xuất, partner là khách hàng
+                "created_at": row['created_at'],
+                "items": []
+            }
+
+        outbound_dict[rid]['items'].append({
+            "product": row['product_name'],
+            "sku": row['sku'],
+            "qty": row['quantity'],
+            "price": row['price'],
+            "total": row['quantity'] * row['price']
+        })
+
+    # Chuyển Dictionary Values thành List để jsonify tạo mảng []
+    return jsonify(list(outbound_dict.values())), 200
 
 
