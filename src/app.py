@@ -15,6 +15,8 @@ from reports_api import reports_bp
 from users_api import users_bp
 from roles_api import roles_bp
 from warehouses_api import warehouses_bp
+from categories_api import categories_bp
+
 from product_api import products_bp
 app = Flask(__name__)
 
@@ -43,6 +45,7 @@ app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(roles_bp, url_prefix='/api/roles')
 app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
 app.register_blueprint(products_bp, url_prefix='/api/products')
+app.register_blueprint(categories_bp, url_prefix='/api/categories')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -69,10 +72,9 @@ def handle_exception(e):
         error_msg = str(e)
         if "547" in error_msg:
             match = re.search(r'constraint "FK_([^_]+)_([^"]+)"', error_msg)
-
+            
             if match:
                 table_con = match.group(1)
-                table_cha = match.group(2)
                 friendly_message = f"Không thể xóa bản ghi này vì đang có dữ liệu liên kết tại bảng '{table_con}'."
             else:
                 friendly_message = "Không thể xóa do vi phạm ràng buộc dữ liệu liên quan."
