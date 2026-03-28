@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request, abort
+from sqlalchemy.testing.exclusions import succeeds_if
 
 import db_helper
 from db_helper import query_db, execute_db
@@ -562,7 +563,7 @@ def get_inbound_receipts():
     return jsonify(list(inbound_dict.values())), 200
 
 
-@inventory_bp.route('/receipts/outbound', methods=['GET'])
+@inventory_bp.route('/outbound', methods=['GET'])
 def get_outbound_receipts():
     """
         API Lấy danh sách toàn bộ Phiếu Xuất kèm chi tiết hàng hóa
@@ -633,5 +634,72 @@ def get_outbound_receipts():
 
     # Chuyển Dictionary Values thành List để jsonify tạo mảng []
     return jsonify(list(outbound_dict.values())), 200
+
+@inventory_bp.route('/<int:id>', methods=['DELETE'])
+def delete_receipt(id):
+    """
+    API Xóa hoàn toàn thông tin một phiếu nhập hoặc xuất
+    ---
+    tags:
+      - Inventory
+    summary: Xóa phiếu nhập/xuất theo ID
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID của phiếu cần xóa (Chi tiết phiếu sẽ bị xóa theo do CASCADE)
+        schema:
+          type: integer
+          example: 1
+    responses:
+      200:
+        description: Xóa phiếu thành công
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Xóa thông tin phiếu thành công"
+      404:
+        description: Không tìm thấy phiếu với ID đã cho
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Thông tin phiếu không tồn tại"
+      500:
+        description: Lỗi máy chủ khi thực hiện xóa
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Đã có lỗi khi xóa thông tin phiếu"
+    """
+
+    exist_receipt = query_db("SELECT id FROM Receipts WHERE id = ?", (id,), one=True)
+    if exist_receipt is None:
+        return jsonify({"success": False, "message" : "Thông tin phiếu không tồn tại"}) ,404
+    success = query_db("DELETE FROM Receipts WHERE id = ?", (id,))
+    if success:
+        return jsonify({"success" : True, "message" : "Xóa thông tin phiếu thành công "}) , 200
+    else:
+        return jsonify({"success" : False, "message" : "Đã có lỗi khi xóa thông tin phiếu"}), 500
 
 
