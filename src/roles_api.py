@@ -195,8 +195,6 @@ def delete_role(id):
       description: "Bạn không có quyền thực hiện hành động này"
     404:
       description: "Vai trò không tồn tại"
-    500:
-      description: "Đã xảy ra lỗi khi xóa vai trò"
   """
   claims = get_jwt()
   if claims.get("role") != "ADMIN":
@@ -205,5 +203,5 @@ def delete_role(id):
   existing = query_db("SELECT id FROM Roles WHERE id = ?", (id,), one=True)
   if not existing:
       abort(404, description="Vai trò không tồn tại")
-  success = execute_db("DELETE FROM Roles WHERE id = ?", (id,))
+  execute_db("DELETE FROM Roles WHERE id = ?", (id,))
   return jsonify({"success": True, "message": "Vai trò đã được xóa"}), 200
