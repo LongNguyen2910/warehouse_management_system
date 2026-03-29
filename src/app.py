@@ -15,6 +15,7 @@ from reports_api import reports_bp
 from users_api import users_bp
 from roles_api import roles_bp
 from warehouses_api import warehouses_bp
+from categories_api import categories_bp
 
 app = Flask(__name__)
 
@@ -45,6 +46,7 @@ app.register_blueprint(reports_bp, url_prefix='/api/reports')
 app.register_blueprint(users_bp, url_prefix='/api/users')   
 app.register_blueprint(roles_bp, url_prefix='/api/roles')  
 app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
+app.register_blueprint(categories_bp, url_prefix='/api/categories')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
