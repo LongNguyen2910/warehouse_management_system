@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, abort
-from db_helper import query_db, execute_db
+from db_helper import query_db, execute_db, get_db_connection
 from datetime import datetime
 
 logistics_bp = Blueprint('logistics', __name__)
@@ -84,8 +84,11 @@ def create_shipment():
 
     if not transfer:
         abort(404, "Transfer not found")
-
-    expected_time = datetime.fromisoformat(data['expected_delivery_at'])
+    # if user send format false
+    try:
+        expected_time = datetime.fromisoformat(data['expected_delivery_at'])
+    except:
+        abort(400, "Invalid datetime format")
 
     success = execute_db(
         """
@@ -100,9 +103,6 @@ def create_shipment():
             expected_time
         )
     )
-
-    if not success:
-        abort(500, "Create failed")
 
     return jsonify({
         "success": True,
@@ -197,9 +197,6 @@ def update_shipment(id):
         f"UPDATE Shipments SET {', '.join(fields)} WHERE id=?",
         tuple(values)
     )
-
-    if not success:
-        abort(500, "Update failed")
     # UPDATE TRANSFER STATUS
 
     # khi đang vận chuyển
@@ -222,17 +219,43 @@ def update_shipment(id):
             "SELECT * FROM Transfer_Details WHERE transfer_id=?",
             (shipment['transfer_id'],)
         )
-
         # cộng kho đích
-        for item in details:
-            execute_db(
-                """
-                UPDATE Inventory
-                SET quantity = quantity + ?
-                WHERE warehouse_id=? AND product_id=?
-                """,
-                (item['quantity'], transfer['to_warehouse_id'], item['product_id'])
+        conn = get_db_connection()
+
+        try:
+            cursor = conn.cursor()
+
+            for item in details:
+                cursor.execute(
+                    "SELECT * FROM Inventory WHERE warehouse_id=? AND product_id=?",
+                    (transfer['to_warehouse_id'], item['product_id'])
+                )
+                inventory = cursor.fetchone()
+
+                if not inventory:
+                    abort(404, "Inventory not found")
+
+                cursor.execute(
+                    """
+                    UPDATE Inventory
+                    SET quantity = quantity + ?
+                    WHERE warehouse_id = ?
+                      AND product_id = ?
+                    """,
+                    (item['quantity'], transfer['to_warehouse_id'], item['product_id'])
+                )
+
+            cursor.execute(
+                "UPDATE Transfer_Orders SET status='COMPLETED' WHERE id=?",
+                (shipment['transfer_id'],)
             )
+
+            conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            raise e
+
 
         # update transfer → COMPLETED
         execute_db(
@@ -274,7 +297,7 @@ def delete_shipment(id):
     if not shipment:
         abort(404, "Shipment not found")
 
-    # 🔥 FIX: không cho xoá nếu đã giao
+    # FIX: không cho xoá nếu đã giao
     if shipment['status'] == "DELIVERED":
         abort(400, "Cannot delete delivered shipment")
 
@@ -282,9 +305,6 @@ def delete_shipment(id):
         "DELETE FROM Shipments WHERE id=?",
         (id,)
     )
-
-    if not success:
-        abort(500, "Delete failed")
 
     return jsonify({
         "success": True,

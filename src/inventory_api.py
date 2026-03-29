@@ -42,9 +42,6 @@ def get_inventory():
 
     data = get_inventory_by(warehouse_id, product_id)
 
-    if not data:
-        abort(404, "No data found")
-
     return jsonify({
         "success": True,
         "data": data
@@ -89,6 +86,14 @@ def add_inventory():
 
     if not all(k in data for k in ("warehouse_id", "product_id", "quantity")):
         abort(400, "Missing fields")
+    inventory = query_db(
+        "SELECT * FROM Inventory WHERE warehouse_id=? AND product_id=?",
+        (data['warehouse_id'], data['product_id']),
+        one=True
+    )
+
+    if not inventory:
+        abort(404, "Inventory not found")
 
     success = execute_db(
         """
@@ -146,6 +151,14 @@ def remove_inventory():
 
     if not all(k in data for k in ("warehouse_id", "product_id", "quantity")):
         abort(400, "Missing fields")
+    inventory = query_db(
+        "SELECT * FROM Inventory WHERE warehouse_id=? AND product_id=?",
+        (data['warehouse_id'], data['product_id']),
+        one=True
+    )
+
+    if not inventory:
+        abort(404, "Inventory not found")
 
     stock = query_db(
         "SELECT quantity FROM Inventory WHERE warehouse_id=? AND product_id=?",
