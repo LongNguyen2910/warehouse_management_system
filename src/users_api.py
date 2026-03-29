@@ -55,7 +55,7 @@ def register():
   if not validate_password_strength(password):
     abort(400, description="Mật khẩu yếu. Mật khẩu nên có ít nhất 8 ký tự, gồm kí tự đặc biệt, chữ hoa, chữ thường và số.")
   password = generate_password_hash(password)
-  
+
   role_id = query_db("SELECT id FROM Roles WHERE role_name = 'STAFF'", one=True)
   print(role_id)
 
@@ -64,7 +64,7 @@ def register():
     return jsonify({"success": True, "message": "Tài khoản mới đã được tạo"}), 200
   else:
       abort(500, description="Đã xảy ra lỗi khi tạo tài khoản")
-  
+
 @users_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_users():
@@ -177,7 +177,7 @@ def change_password(id):
       description: "Không tìm thấy người dùng với ID đã cho"
     500:
       description: "Đã xảy ra lỗi khi cập nhật mật khẩu"
-  """  
+  """
   payload = flask.request.get_json(silent=True) or {}
   password = payload.get("password")
   if is_empty(password):
@@ -186,11 +186,11 @@ def change_password(id):
   if not validate_password_strength(password):
     abort(400, description="Mật khẩu yếu. Mật khẩu nên có ít nhất 8 ký tự, gồm kí tự đặc biệt, chữ hoa, chữ thường và số.")
   password = generate_password_hash(password)
-  
+
   existing = query_db("SELECT id FROM Users WHERE id = ?", (id,), one=True)
   if not existing:
     abort(404, description="Không tìm thấy người dùng với ID đã cho")
-  
+
   success = execute_db("UPDATE Users SET password_hash = ? WHERE id = ?", (password, id))
   if success:
     return jsonify({"success": True, "message": "Mật khẩu đã được cập nhật"}), 200
@@ -280,9 +280,10 @@ def delete_user(id):
     403:
       description: "Bạn không có quyền thực hiện hành động này"
     404:
-      description: "Không tìm thấy người dùng với ID đã cho"  
+      description: "Không tìm thấy người dùng với ID đã cho"
     500:
-      description: "Đã xảy ra lỗi khi xóa người dùng" 
+      description: "Đã xảy ra lỗi khi xóa người dùng"
+      description: "Không tìm thấy người dùng với ID đã cho"  
   """
   claims = get_jwt()
   if claims.get("role") != "ADMIN":
@@ -290,9 +291,10 @@ def delete_user(id):
   existing = query_db("SELECT id FROM Users WHERE id = ?", (id,), one=True)
   if not existing:
     abort(404, description="Không tìm thấy người dùng với ID đã cho")
-  
+
   success = execute_db("DELETE FROM Users WHERE id = ?", (id,))
   if success:
     return jsonify({"success": True, "message": "Người dùng đã được xóa"}), 200
   else:
       abort(500, description="Đã xảy ra lỗi khi xóa người dùng")
+
