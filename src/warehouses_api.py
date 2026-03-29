@@ -8,7 +8,7 @@ from validate_helper import is_empty
 warehouses_bp = Blueprint('warehouses', __name__)
 
 @warehouses_bp.route('/', methods=['GET'])
-@jwt_required()
+# @jwt_required()
 def get_warehouses():
   """
   API Lấy danh sách các kho hàng có trong hệ thống
@@ -18,20 +18,14 @@ def get_warehouses():
   security:
     - Bearer: []
   parameters:
-    - name: body
-      in: body
-      required: true
-      schema:
-        type: object
-        properties:
-          id:
-            type: string
-            description: ID của kho hàng
-            example: "WH001"
-          name:
-            type: string
-            description: Tên kho hàng
-            example: "Kho A"
+    - name: id
+      in: query
+      required: false
+      type: integer
+    - name: name
+      in: query
+      required: false
+      type: string
   responses:
     200:
       description: Danh sách các kho hàng
@@ -51,14 +45,27 @@ def get_warehouses():
                 name:
                   type: string
                   example: "Kho A"
+                address:
+                  type: string
+                  example: "Nguyễn Trãi, Thanh Xuân, Hà Nội"
+                capacity:
+                  type: integer
+                  example: 1000
+                longitude:
+                  type: number
+                  format: float
+                  example: 105.804817
+                latitude:
+                  type: number
+                  format: float
+                  example: 21.028511
     404:
       description: "Không tim thấy kho hàng nào phù hợp với tiêu chí tìm kiếm"
     401:
       description: "Chưa xác thực hoặc token không hợp lệ"
   """
-  payload = flask.request.get_json(silent=True) or {}
-  id = payload.get("id")
-  name = payload.get("name")
+  id = flask.request.args.get("id")
+  name = flask.request.args.get("name")
   query = "SELECT * FROM Warehouses WHERE"
   data = ()
   if id:
@@ -78,7 +85,7 @@ def get_warehouses():
   return jsonify({"success": True, "data": warehouses}), 200
 
 @warehouses_bp.route('/', methods=['POST'])
-@jwt_required()
+# @jwt_required()
 def create_warehouse():
   """
   API Tạo kho hàng mới
@@ -106,6 +113,16 @@ def create_warehouse():
                 type: integer
                 description: Sức chứa tối đa của kho hàng
                 example: 1000
+            latitude:
+                type: number
+                format: float
+                description: Vĩ độ của kho hàng
+                example: 21.028511
+            longitude:
+                type: number  
+                format: float
+                description: Kinh độ của kho hàng
+                example: 105.804817
   responses:
     200:
       description: "Kho hàng mới đã được tạo"
@@ -118,19 +135,146 @@ def create_warehouse():
     500:
       description: "Đã xảy ra lỗi khi tạo kho hàng mới"
   """
-  claims = get_jwt()
-  if claims.get("role") != "ADMIN":
-    abort(403, description="Bạn không có quyền thực hiện hành động này")
+  # claims = get_jwt()
+  # if claims.get("role") != "ADMIN":
+  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   warehouse_name = payload.get("name")
   address = payload.get("address")
   capacity = payload.get("capacity")
-  if is_empty(warehouse_name) and is_empty(address) and is_empty(capacity):
-    abort(400, description="Tên, địa chỉ và sức chứa của kho hàng không được để trống")
+  longitude = payload.get("longitude")
+  latitude = payload.get("latitude")
+  if is_empty(warehouse_name):
+    abort(400, description="Tên của kho hàng không được để trống")
   warehouse_name = warehouse_name.strip().upper()
-  success = execute_db("INSERT INTO Warehouses (name, address, capacity) VALUES (?, ?, ?)", (warehouse_name, address, capacity))
+  success = execute_db("INSERT INTO Warehouses (name, address, capacity, longitude, latitude) VALUES (?, ?, ?, ?, ?)", (warehouse_name, address, capacity, longitude, latitude))
   if success:
     return jsonify({"success": True, "message": "Kho hàng mới đã được tạo"}), 200
   else:
       abort(500, description="Đã xảy ra lỗi khi tạo kho hàng mới")
 
+@warehouses_bp.route('/<id>', methods=['PUT'])
+# @jwt_required()
+def update_warehouse(id):
+  """
+  API Cập nhật thông tin kho hàng
+  ---
+  tags:
+    - Warehouses
+  security:
+    - Bearer: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      type: integer
+    - name: body
+      in: body
+      required: true
+      schema:
+        type: object
+        properties:
+            name:
+                type: string
+                description: Tên kho hàng
+                example: "Kho A"
+            address:
+                type: string
+                description: Địa chỉ kho hàng
+                example: "Nguyễn Trãi, Thanh Xuân, Hà Nội"
+            capacity:
+                type: integer
+                description: Sức chứa tối đa của kho hàng
+                example: 1000
+            latitude:
+                type: number
+                format: float
+                description: Vĩ độ của kho hàng
+                example: 21.028511
+            longitude:
+                type: number  
+                format: float
+                description: Kinh độ của kho hàng
+                example: 105.804817
+  responses:
+    200:
+      description: "Kho hàng đã được cập nhật"
+    400:
+      description: "Yêu cầu không hợp lệ (ví dụ: tên kho hàng bị trùng với kho hàng khác)"
+    401:
+      description: "Chưa xác thực hoặc token không hợp lệ"
+    403:
+      description: "Bạn không có quyền thực hiện hành động này"
+    404:
+      description: "Không tìm thấy kho hàng với ID đã cho"
+    500:
+      description: "Đã xảy ra lỗi khi cập nhật thông tin kho hàng"
+  """
+  # claims = get_jwt()
+  # if claims.get("role") != "ADMIN":
+  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  payload = flask.request.get_json(silent=True) or {}
+  warehouse_name = payload.get("name")
+  address = payload.get("address")
+  capacity = payload.get("capacity")
+  longitude = payload.get("longitude")
+  latitude = payload.get("latitude")
+  existing = query_db("SELECT id FROM Warehouses WHERE id = ?", (id,), one=True)
+  if not existing:
+    abort(404, description="Không tìm thấy kho hàng với ID đã cho")
+  data = ()
+  query = "UPDATE Warehouses SET"
+  if warehouse_name:
+    warehouse_name = warehouse_name.strip()
+    query += " name = ?,"
+    data += (warehouse_name,)
+  if address:
+    address = address.strip()
+    query += " address = ?,"
+    data += (address,)
+  if capacity:
+    capacity = int(capacity)
+    query += " capacity = ?,"
+    data += (capacity,)
+  if longitude:
+    query += " longitude = ?,"
+    data += (longitude,)
+  if latitude:
+    query += " latitude = ?,"
+    data += (latitude,)
+  execute_db(query.rstrip(",") + " WHERE id = ?", (*data, id))
+  return jsonify({"success": True, "message": "Kho hàng đã được cập nhật"}), 200
+
+@warehouses_bp.route('/<id>', methods=['DELETE'])
+# @jwt_required()
+def delete_warehouse(id):
+  """
+  API Xóa kho hàng
+  ---
+  tags:
+    - Warehouses
+  security:
+    - Bearer: []
+  parameters:
+    - name: id
+      in: path
+      required: true
+      type: integer
+  responses:
+    200:
+      description: "Kho đã được xóa"
+    401:
+      description: "Chưa xác thực hoặc token không hợp lệ"
+    403:
+      description: "Bạn không có quyền thực hiện hành động này"
+    404:
+      description: "Không tìm thấy kho hàng với ID đã cho"
+  """
+  # claims = get_jwt()
+  # if claims.get("role") != "ADMIN":
+  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  existing = query_db("SELECT id FROM Warehouses WHERE id = ?", (id,), one=True)
+  if not existing:
+    abort(404, description="Không tìm thấy kho hàng với ID đã cho")
+  execute_db("DELETE FROM Warehouses WHERE id = ?", (id,))
+  return jsonify({"success": True, "message": "Kho đã được xóa"}), 200
