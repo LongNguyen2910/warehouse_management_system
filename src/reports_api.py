@@ -37,12 +37,13 @@ def getTonKho():
                 FROM Inventory i
                          JOIN Products p ON i.product_id = p.id
                          JOIN Warehouses w ON i.warehouse_id = w.id
-                WHERE i.quantity > 0 \
+                WHERE i.quantity > 0 
                 """
         results = query_db(query)
         return success_response(results)
     except Exception as e:
         return error_response(e)
+
 
 #Low-stock
 @reports_bp.route('/low-stock', methods=['GET'])
@@ -64,18 +65,19 @@ def getLowStock():
                 FROM Products p
                          LEFT JOIN Inventory i ON p.id = i.product_id
                 GROUP BY p.name, p.min_stock
-                HAVING ISNULL(SUM(i.quantity), 0) <= p.min_stock \
+                HAVING ISNULL(SUM(i.quantity), 0) <= p.min_stock 
                 """
         results = query_db(query)
         return success_response(results)
     except Exception as e:
         return error_response(e)
 
+
 #History
 @reports_bp.route('/history/<string:sku>', methods=['GET'])
 def getInventoryHistory(sku):
     """
-    API lịch sử nhập/xuất (không gồm transfer)
+    API lịch sử nhập/xuất
     ---
     tags:
       - Reports
@@ -98,12 +100,13 @@ def getInventoryHistory(sku):
                          LEFT JOIN Warehouses w ON l.warehouse_id = w.id
                 WHERE p.sku = ?
                   AND l.action_type <> 'TRANSFER'
-                ORDER BY l.created_at DESC \
+                ORDER BY l.created_at DESC 
                 """
         results = query_db(query, (sku,))
         return success_response(results)
     except Exception as e:
         return error_response(e)
+
 
 #Transfer
 @reports_bp.route('/transfer-history', methods=['GET'])
@@ -138,17 +141,17 @@ def getTransferHistory():
                          JOIN Warehouses w_from ON t.from_warehouse_id = w_from.id
                          JOIN Warehouses w_to ON t.to_warehouse_id = w_to.id
                          LEFT JOIN Users u ON t.staff_id = u.id
-                WHERE 1=1 \
                 """
         params = []
         if sku:
-            query += " AND p.sku = ?"
+            query += " WHERE p.sku = ?"
             params.append(sku)
         query += " ORDER BY t.created_at DESC"
         results = query_db(query, tuple(params))
         return success_response(results)
     except Exception as e:
         return error_response(e)
+
 
 #Receipts
 @reports_bp.route('/receipt', methods=['GET'])
@@ -176,12 +179,13 @@ def getReceiptHistory():
                          JOIN Products p ON rd.product_id = p.id
                          JOIN Warehouses w ON r.warehouse_id = w.id
                          LEFT JOIN Users u ON r.staff_id = u.id
-                ORDER BY r.created_at DESC \
+                ORDER BY r.created_at DESC 
                 """
         results = query_db(query)
         return success_response(results)
     except Exception as e:
         return error_response(e)
+
 
 #Export
 @reports_bp.route('/export/excel', methods=['GET'])
@@ -233,10 +237,19 @@ def export():
                                     """))
 
         df5 = pd.DataFrame(query_db("""
-                                    SELECT r.id,r.type,p.name,rd.quantity,rd.price
-                                    FROM Receipts r
-                                             JOIN Receipt_Details rd ON r.id=rd.receipt_id
-                                             JOIN Products p ON rd.product_id=p.id
+                                    SELECT r.id AS receipt_id, r.type,
+                       w.name AS warehouse_name,
+                       p.sku, p.name AS product_name,
+                       rd.quantity, rd.price,
+                       (rd.quantity * rd.price) AS total_value,
+                       ISNULL(u.username, 'System') AS staff,
+                       r.partner_name, r.created_at
+                FROM Receipts r
+                         JOIN Receipt_Details rd ON r.id = rd.receipt_id
+                         JOIN Products p ON rd.product_id = p.id
+                         JOIN Warehouses w ON r.warehouse_id = w.id
+                         LEFT JOIN Users u ON r.staff_id = u.id
+                ORDER BY r.created_at DESC
                                     """))
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_list = {
