@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request, abort
-from sqlalchemy.testing.exclusions import succeeds_if
 
 import db_helper
 from db_helper import query_db, execute_db
@@ -701,5 +700,3 @@ def delete_receipt(id):
         return jsonify({"success" : True, "message" : "Xóa thông tin phiếu thành công "}) , 200
     else:
         return jsonify({"success" : False, "message" : "Đã có lỗi khi xóa thông tin phiếu"}), 500
-
-

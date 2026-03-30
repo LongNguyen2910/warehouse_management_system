@@ -8,6 +8,8 @@
 - pyodbc
 - python-dotenv
 - Flask-JWT-Extended
+- openpyxl
+- pandas
 
 Install dependencies with:
 
@@ -34,6 +36,8 @@ wms
 |- db_helper.py      # Core SQL Server connection helper
 |- auth_api.py       # Authentication and authorization
 |- inventory_api.py  # Inventory in/out operations
+|- product_api.py    # CRUD product
+|- categories_api.py # CRUD categories
 |- logistics_api.py  # Transfer and delivery operations
 |- roles_api.py      # CRUD Role
 |- users_api.py      # registration, change password, delete, update role user
