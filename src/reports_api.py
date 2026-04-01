@@ -224,7 +224,6 @@ def export():
                                     SELECT TOP 100 p.sku,p.name,l.change_amount,l.action_type,l.created_at
                                     FROM Inventory_Logs l
                                              JOIN Products p ON l.product_id=p.id
-                                    WHERE l.action_type<>'TRANSFER'
                                     ORDER BY l.created_at DESC
                                 """))
 
