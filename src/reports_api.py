@@ -99,7 +99,6 @@ def getInventoryHistory(sku):
                          JOIN Products p ON l.product_id = p.id
                          LEFT JOIN Warehouses w ON l.warehouse_id = w.id
                 WHERE p.sku = ?
-                  AND l.action_type <> 'TRANSFER'
                 ORDER BY l.created_at DESC 
             """
     results = query_db(query, (sku,))
@@ -254,6 +253,12 @@ def export():
                          LEFT JOIN Users u ON r.staff_id = u.id
                 ORDER BY r.created_at DESC
                                 """))
+    if not df5.empty:
+        total_value_sum = df5['total_value'].sum()
+        total_row = {col: '' for col in df5.columns}
+        total_row['product_name'] = 'TOTAL'
+        total_row['total_value'] = total_value_sum
+        df5 = pd.concat([df5, pd.DataFrame([total_row])], ignore_index=True)
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_list = {
                 'TonKho': df1,
