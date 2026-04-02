@@ -38,6 +38,13 @@ def query_db(query, args=(), one=False):
     
     cursor = conn.cursor()
     cursor.execute(query, args)
+
+    if query.strip().upper().startswith(("INSERT", "UPDATE", "DELETE")):
+        columns = [column[0] for column in cursor.description]
+        result = [dict(zip(columns, row)) for row in cursor.fetchall()]
+        conn.commit()
+        conn.close()
+        return (result[0] if result else None) if one else result
     
     columns = [column[0] for column in cursor.description]
     

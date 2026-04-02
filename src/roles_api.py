@@ -13,8 +13,6 @@ def get_roles():
   ---
   tags:
     - Roles
-  security:
-    - Bearer: []
   parameters:
     - name: id
       in: query
@@ -45,8 +43,6 @@ def get_roles():
                   example: "ADMIN"
     404:
       description: "Không tim thấy vai trò nào phù hợp với tiêu chí tìm kiếm"
-    401:
-      description: "Chưa xác thực hoặc token không hợp lệ"
   """
   id = flask.request.args.get("id")
   role_name = flask.request.args.get("role_name")
@@ -76,8 +72,6 @@ def create_role():
   ---
   tags:
     - Roles
-  security:
-    - Bearer: []
   parameters:
     - name: body
       in: body
@@ -94,16 +88,9 @@ def create_role():
       description: "Vai trò mới đã được tạo"
     400:
       description: "Yêu cầu không hợp lệ (ví dụ: thiếu tên vai trò hoặc vai trò đã tồn tại)"
-    401:
-      description: "Chưa xác thực hoặc token không hợp lệ"
-    403:
-      description: "Bạn không có quyền thực hiện hành động này"
     500:
       description: "Đã xảy ra lỗi khi tạo vai trò mới"
   """
-  claims = get_jwt()
-  if claims.get("role") != "ADMIN":
-    abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   role_name = payload.get("role_name")
   if is_empty(role_name):
@@ -117,7 +104,7 @@ def create_role():
     return jsonify({"success": True, "message": "Vai trò mới đã được tạo"}), 200
   else:
       abort(500, description="Đã xảy ra lỗi khi tạo vai trò mới")
-    
+
 @roles_bp.route('/<id>', methods=['PUT'])
 @jwt_required()
 def update_role(id):
@@ -160,7 +147,7 @@ def update_role(id):
     abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   role_name = payload.get("role_name")
-  if is_empty(role_name):
+  if role_name is None:
       abort(400, description="Tên vai trò không được để trống")
   role_name = role_name.strip().upper()
   success = execute_db("UPDATE Roles SET role_name = ? WHERE id = ?", (role_name, id))
@@ -170,7 +157,6 @@ def update_role(id):
       abort(500, description="Đã xảy ra lỗi khi cập nhật vai trò")
 
 @roles_bp.route('/<id>', methods=['DELETE'])
-@jwt_required()
 def delete_role(id):
   """
   API Xóa một vai trò
