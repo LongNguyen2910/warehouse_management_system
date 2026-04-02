@@ -283,6 +283,7 @@ def delete_user(id):
       description: "Không tìm thấy người dùng với ID đã cho"
     500:
       description: "Đã xảy ra lỗi khi xóa người dùng"
+      description: "Không tìm thấy người dùng với ID đã cho"
   """
   claims = get_jwt()
   if claims.get("role") != "ADMIN":
@@ -296,3 +297,4 @@ def delete_user(id):
     return jsonify({"success": True, "message": "Người dùng đã được xóa"}), 200
   else:
       abort(500, description="Đã xảy ra lỗi khi xóa người dùng")
+

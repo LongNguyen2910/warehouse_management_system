@@ -15,9 +15,8 @@ from reports_api import reports_bp
 from users_api import users_bp
 from roles_api import roles_bp
 from warehouses_api import warehouses_bp
-from categories_api import categories_bp
-
 from product_api import products_bp
+from categories_api import categories_bp
 app = Flask(__name__)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
@@ -45,6 +44,7 @@ app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(roles_bp, url_prefix='/api/roles')
 app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
 app.register_blueprint(products_bp, url_prefix='/api/products')
+
 app.register_blueprint(categories_bp, url_prefix='/api/categories')
 
 @app.errorhandler(Exception)
