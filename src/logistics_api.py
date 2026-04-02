@@ -256,6 +256,13 @@ def update_shipment(id):
             conn.rollback()
             raise e
 
+
+        # update transfer → COMPLETED
+        execute_db(
+            "UPDATE Transfer_Orders SET status='COMPLETED' WHERE id=?",
+            (shipment['transfer_id'],)
+        )
+
     return jsonify({
         "success": True,
         "data": "Shipment updated"
