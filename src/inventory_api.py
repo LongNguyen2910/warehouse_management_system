@@ -135,13 +135,13 @@ def inbound():
             )
             if not success:
                     abort(500, description="Đã xảy ra lỗi khi thêm sản phẩm vào kho")
-            else:
-                success = execute_db(
-                "UPDATE Inventory SET quantity = quantity + ? WHERE id = ?",
-                (int(quantity), exist_inventory[0])
-                )
-                if not success:
-                    abort(500, description="Đã xảy ra lỗi khi cập nhật số lượng sản phẩm trong kho")
+        else:
+            success = execute_db(
+            "UPDATE Inventory SET quantity = quantity + ? WHERE id = ?",
+            (int(quantity), exist_inventory["id"])
+            )
+            if not success:
+                abort(500, description="Đã xảy ra lỗi khi cập nhật số lượng sản phẩm trong kho")
 
         success = execute_db(
             "INSERT INTO Inventory_Logs (product_id, warehouse_id, change_amount, action_type, reference_id) VALUES (?,?,?,N'INBOUND',?)",
