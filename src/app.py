@@ -17,10 +17,15 @@ from roles_api import roles_bp
 from warehouses_api import warehouses_bp
 from product_api import products_bp
 from categories_api import categories_bp
+from receipt_api import receipt_bp
 app = Flask(__name__)
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
+
+CORS(app)
+
+app.url_map.strict_slashes = False
 
 app.config['SWAGGER'] = {
     'title': 'WMS API - Nhóm 4',
@@ -44,7 +49,7 @@ app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(roles_bp, url_prefix='/api/roles')
 app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
 app.register_blueprint(products_bp, url_prefix='/api/products')
-
+app.register_blueprint(receipt_bp, url_prefix='/api/receipts')
 app.register_blueprint(categories_bp, url_prefix='/api/categories')
 
 @app.errorhandler(Exception)
