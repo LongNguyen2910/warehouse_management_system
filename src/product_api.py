@@ -18,6 +18,8 @@ def get_products():
           type: array
           items:
             properties:
+              id:
+                type: integer
               sku:
                 type: string
               product_name:
@@ -32,7 +34,7 @@ def get_products():
                  type: string
     """
     #Show all products from database
-    products =  query_db("select sku, products.name as product_name, min_stock, description, created_at, categories.name as category_name "
+    products =  query_db("select products.id as id, sku, products.name as product_name, min_stock, description, created_at, categories.name as category_name "
                          "from products join Categories on Categories.id = products.category_id");
     return jsonify(products),200
 
