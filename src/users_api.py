@@ -293,9 +293,6 @@ def delete_user(id):
   if not existing:
     abort(404, description="Không tìm thấy người dùng với ID đã cho")
 
-  success = execute_db("DELETE FROM Users WHERE id = ?", (id,))
-  if success:
-    return jsonify({"success": True, "message": "Người dùng đã được xóa"}), 200
-  else:
-      abort(500, description="Đã xảy ra lỗi khi xóa người dùng")
+  execute_db("DELETE FROM Users WHERE id = ?", (id,))
+  return jsonify({"success": True, "message": "Người dùng đã được xóa"}), 200
 

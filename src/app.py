@@ -19,6 +19,8 @@ from product_api import products_bp
 from categories_api import categories_bp
 app = Flask(__name__)
 
+CORS(app)
+
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 
