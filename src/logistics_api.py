@@ -373,7 +373,7 @@ def get_shipment_by_id(id):
         description: Không tìm thấy shipment với ID này
     """
     shipment = query_db(
-        "SELECT * FROM Shipments WHERE id=?",
+        "SELECT * FROM Shipments WHERE transfer_id=?",
         (id,),
         one=True
     )

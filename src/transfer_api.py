@@ -8,7 +8,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     return math.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2)
 
 VALID_STATUS = ["PENDING", "APPROVED"]
-@transfer_bp.route('/transfers', methods=['GET'])
+@transfer_bp.route('/', methods=['GET'])
 def get_transfers():
     """
     Get all transfers
