@@ -75,9 +75,10 @@ def create_shipment():
     if not all(k in data for k in required):
         abort(400, "Missing fields")
 
+
     # check transfer tồn tại
     transfer = query_db(
-        "SELECT * FROM Transfer_Orders WHERE id=?",
+        "SELECT * FROM Transfer_Orders WHERE id=? AND status='APPROVED'",
         (data['transfer_id'],),
         one=True
     )
@@ -89,7 +90,15 @@ def create_shipment():
         expected_time = datetime.fromisoformat(data['expected_delivery_at'])
     except:
         abort(400, "Invalid datetime format")
+    # check shipment đã tồn tại cho transfer_id chưa
+    existing_shipment = query_db(
+        "SELECT * FROM Shipments WHERE transfer_id=?",
+        (data['transfer_id'],),
+        one=True
+    )
 
+    if existing_shipment:
+        abort(400, "Shipment for this Transfer ID already exists")
     success = execute_db(
         """
         INSERT INTO Shipments 
@@ -104,11 +113,12 @@ def create_shipment():
         )
     )
 
+
     return jsonify({
         "success": True,
         "data": "Shipment created"
     })
-
+# edit
 @logistics_bp.route('/shipments/<int:id>', methods=['PUT'])
 def update_shipment(id):
     """
@@ -310,3 +320,4 @@ def delete_shipment(id):
         "success": True,
         "data": "Shipment deleted"
     })
+# @logistics_bp.route('/shipments/search')

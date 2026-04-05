@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, abort
-from db_helper import query_db, execute_db
+from db_helper import query_db, execute_db, get_db_connection
 import math
 
 transfer_bp = Blueprint('transfer', __name__)
@@ -7,6 +7,7 @@ transfer_bp = Blueprint('transfer', __name__)
 def calculate_distance(lat1, lon1, lat2, lon2):
     return math.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2)
 
+VALID_STATUS = ["PENDING", "APPROVED"]
 @transfer_bp.route('/transfers', methods=['GET'])
 def get_transfers():
     """
@@ -131,6 +132,83 @@ def create_transfer():
             "status": "PENDING"
         }
     })
+
+
+@transfer_bp.route('/transfers/<int:id>', methods=['PUT'])
+def update_transfer_status(id):
+    """
+    Update transfer status
+    ---
+    tags:
+      - Transfers
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+        description: Transfer order ID
+      - in: body
+        name: body
+        schema:
+          type: object
+          required:
+            - status
+          properties:
+            status:
+              type: string
+              enum: ["PENDING", "APPROVED"]
+              example: "APPROVED"
+    responses:
+      200:
+        description: Status updated
+      400:
+        description: Invalid input or not enough stock
+      404:
+        description: Transfer not found
+      500:
+        description: Update failed
+    """
+    data = request.json
+    if not data or 'status' not in data:
+        abort(400, "Missing status")
+
+    status = data['status']
+    if status not in VALID_STATUS:
+        abort(400, "Invalid status")
+
+    transfer = query_db("SELECT * FROM Transfer_Orders WHERE id=?", (id,), one=True)
+    if not transfer:
+        abort(404, "Transfer not found")
+
+    old_status = transfer['status']
+    if old_status == status:
+        return jsonify({"success": True, "data": "Status unchanged"})
+
+    # Chỉ trừ kho nếu status đổi sang APPROVED
+    if status == "APPROVED":
+        details = query_db("SELECT * FROM Transfer_Details WHERE transfer_id=?", (id,))
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            for item in details:
+                cursor.execute("SELECT quantity FROM Inventory WHERE warehouse_id=? AND product_id=?",
+                               (transfer['from_warehouse_id'], item['product_id']))
+                stock = cursor.fetchone()
+                if not stock or stock['quantity'] < item['quantity']:
+                    abort(400, f"Not enough stock for product {item['product_id']}")
+                cursor.execute(
+                    "UPDATE Inventory SET quantity = quantity - ? WHERE warehouse_id=? AND product_id=?",
+                    (item['quantity'], transfer['from_warehouse_id'], item['product_id'])
+                )
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    # Update status
+    execute_db("UPDATE Transfer_Orders SET status=? WHERE id=?", (status, id))
+
+    return jsonify({"success": True, "data": {"transfer_id": id, "status": status}})
 
 @transfer_bp.route('/transfers/suggest', methods=['GET'])
 def suggest_warehouse():
