@@ -75,9 +75,10 @@ def create_shipment():
     if not all(k in data for k in required):
         abort(400, "Missing fields")
 
+
     # check transfer tồn tại
     transfer = query_db(
-        "SELECT * FROM Transfer_Orders WHERE id=?",
+        "SELECT * FROM Transfer_Orders WHERE id=? AND status='APPROVED'",
         (data['transfer_id'],),
         one=True
     )
@@ -89,7 +90,15 @@ def create_shipment():
         expected_time = datetime.fromisoformat(data['expected_delivery_at'])
     except:
         abort(400, "Invalid datetime format")
+    # check shipment đã tồn tại cho transfer_id chưa
+    existing_shipment = query_db(
+        "SELECT * FROM Shipments WHERE transfer_id=?",
+        (data['transfer_id'],),
+        one=True
+    )
 
+    if existing_shipment:
+        abort(400, "Shipment for this Transfer ID already exists")
     success = execute_db(
         """
         INSERT INTO Shipments 
@@ -104,11 +113,12 @@ def create_shipment():
         )
     )
 
+
     return jsonify({
         "success": True,
         "data": "Shipment created"
     })
-
+# edit
 @logistics_bp.route('/shipments/<int:id>', methods=['PUT'])
 def update_shipment(id):
     """
@@ -309,4 +319,69 @@ def delete_shipment(id):
     return jsonify({
         "success": True,
         "data": "Shipment deleted"
+    })
+
+
+@logistics_bp.route('/shipments/<int:id>', methods=['GET'])
+def get_shipment_by_id(id):
+    """
+    Get shipment by ID
+    ---
+    tags:
+      - Shipments
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+        description: ID của shipment cần tìm
+        example: 1
+    responses:
+      200:
+        description: Thông tin chi tiết shipment
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            data:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                transfer_id:
+                  type: integer
+                  example: 3
+                driver_name:
+                  type: string
+                  example: "Nguyen Van A"
+                license_plate:
+                  type: string
+                  example: "51A-12345"
+                status:
+                  type: string
+                  example: "SHIPPING"
+                expected_delivery_at:
+                  type: string
+                  example: "2026-03-26T10:00:00"
+                actual_delivery_at:
+                  type: string
+                  example: null
+      404:
+        description: Không tìm thấy shipment với ID này
+    """
+    shipment = query_db(
+        "SELECT * FROM Shipments WHERE id=?",
+        (id,),
+        one=True
+    )
+
+    if not shipment:
+        abort(404, "Shipment not found")
+
+    return jsonify({
+        "success": True,
+        "data": dict(shipment)
     })
