@@ -230,7 +230,60 @@ function addDelayedMenuNavigation() {
   });
 }
 
+function hideAdminMenuForNonAdmin() {
+  const menuRoot = document.getElementById("layout-menu");
+  if (!menuRoot) {
+    return;
+  }
+
+  let rawUserInfo = null;
+  try {
+    rawUserInfo = localStorage.getItem("user_info");
+  } catch (error) {
+    rawUserInfo = null;
+  }
+
+  if (!rawUserInfo) {
+    return;
+  }
+
+  let userInfo = null;
+  try {
+    userInfo = JSON.parse(rawUserInfo);
+  } catch (error) {
+    return;
+  }
+
+  const userRole = String(userInfo && userInfo.role ? userInfo.role : "")
+    .trim()
+    .toUpperCase();
+
+  if (userRole === "ADMIN") {
+    return;
+  }
+
+  const menuHeaders = Array.from(menuRoot.querySelectorAll(".menu-header"));
+  const adminHeader = menuHeaders.find((header) => {
+    const headerText = header.textContent || "";
+    return headerText.trim().toUpperCase() === "ADMIN";
+  });
+
+  if (!adminHeader) {
+    return;
+  }
+
+  adminHeader.style.display = "none";
+
+  let nextNode = adminHeader.nextElementSibling;
+  while (nextNode && !nextNode.classList.contains("menu-header")) {
+    const currentNode = nextNode;
+    nextNode = nextNode.nextElementSibling;
+    currentNode.style.display = "none";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
+  hideAdminMenuForNonAdmin();
   forceMenuLinksOpenInSameTab();
   addDelayedMenuNavigation();
   updateActiveMenuByCurrentPage();

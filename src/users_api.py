@@ -118,9 +118,6 @@ def get_users():
     404:
       description: "Không tim thấy người dùng nào phù hợp với tiêu chí tìm kiếm"
   """
-  claims = get_jwt()
-  if claims.get("role") != "ADMIN":
-    abort(403, description="Bạn không có quyền thực hiện hành động này")
   id = flask.request.args.get("id")
   username = flask.request.args.get("username")
   query = "SELECT Users.id, Users.username, Roles.role_name, Users.created_at FROM Users JOIN Roles ON Users.role_id = Roles.id WHERE"

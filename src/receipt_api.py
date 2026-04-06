@@ -1,16 +1,20 @@
 from flask import Blueprint, jsonify, request, abort
+from flask_jwt_extended import get_jwt, jwt_required
 
 import db_helper
 from db_helper import query_db, execute_db
 receipt_bp = Blueprint('receipts', __name__)
 
 @receipt_bp.route('/inbound', methods=['POST'])
+@jwt_required()
 def inbound():
     """
         API Tạo phiếu nhập sản phẩm và cập nhật kho
         ---
         tags:
           - Receipt
+        security:
+          - Bearer: []
         parameters:
           - name: body
             in: body
@@ -62,6 +66,8 @@ def inbound():
                   type: string
           400:
             description: Dữ liệu không hợp lệ (Tên kho, nhân viên hoặc sản phẩm không tồn tại)
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
           500:
             description: Lỗi hệ thống khi ghi dữ liệu vào cơ sở dữ liệu
         """
@@ -154,12 +160,15 @@ def inbound():
 
 
 @receipt_bp.route('/outbound', methods=['POST'])
+@jwt_required()
 def outbound():
     """
         API Tạo phiếu xuất sản phẩm và cập nhật kho
         ---
         tags:
           - Receipt
+        security:
+          - Bearer: []
         parameters:
           - name: body
             in: body
@@ -211,6 +220,8 @@ def outbound():
                   type: string
           400:
             description: Dữ liệu không hợp lệ (Tên kho, nhân viên, sản phẩm không tồn tại hoặc không đủ số lượng)
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
           500:
             description: Lỗi hệ thống khi ghi dữ liệu vào cơ sở dữ liệu
         """
@@ -311,12 +322,15 @@ def outbound():
 
 
 @receipt_bp.route("/", methods=["GET"])
+@jwt_required()
 def get_inventory():
     """
         API Lấy danh sách toàn bộ phiếu kèm chi tiết hàng hóa
         ---
         tags:
           - Receipt
+        security:
+          - Bearer: []
         responses:
           200:
             description: Danh sách các phiếu đã được nhóm theo ID
@@ -334,6 +348,8 @@ def get_inventory():
                       properties:
                         product_name: {type: string}
                         quantity: {type: integer}
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"  
         """
     sql = """
           SELECT r.id       as receipt_id,
@@ -380,12 +396,15 @@ def get_inventory():
 
 
 @receipt_bp.route('/<int:id>', methods=['GET'])
+@jwt_required()
 def get_receipt_by_id(id):
     """
         API Lấy chi tiết một phiếu bất kỳ theo ID
         ---
         tags:
           - Receipt
+        security:
+          - Bearer: []
         parameters:
           - name: id
             in: path
@@ -407,6 +426,8 @@ def get_receipt_by_id(id):
                     properties:
                       product: {type: string}
                       qty: {type: integer}
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
           404:
             description: Không tìm thấy ID phiếu này trong hệ thống
         """
@@ -453,12 +474,15 @@ def get_receipt_by_id(id):
 
 
 @receipt_bp.route('/inbound', methods=['GET'])
+@jwt_required()
 def get_inbound_receipts():
     """
         API Lấy danh sách toàn bộ Phiếu Nhập kèm chi tiết hàng hóa
         ---
         tags:
           - Receipt
+        security:
+          - Bearer: []
         responses:
           200:
             description: Danh sách các phiếu nhập hiện có trong hệ thống
@@ -499,6 +523,8 @@ def get_inbound_receipts():
                         price:
                           type: number
                           example: 5500.0
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
         """
     sql = """
           SELECT r.id       as receipt_id,
@@ -543,12 +569,15 @@ def get_inbound_receipts():
 
 
 @receipt_bp.route('/outbound', methods=['GET'])
+@jwt_required()
 def get_outbound_receipts():
     """
         API Lấy danh sách toàn bộ Phiếu Xuất kèm chi tiết hàng hóa
         ---
         tags:
           - Receipt
+        security:
+          - Bearer: []
         responses:
           200:
             description: Danh sách các phiếu xuất (Outbound)
@@ -568,6 +597,8 @@ def get_outbound_receipts():
                         product: {type: string}
                         qty: {type: integer}
                         total: {type: number}
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
         """
     sql = """
           SELECT r.id,
@@ -613,6 +644,7 @@ def get_outbound_receipts():
 
 
 @receipt_bp.route('/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_receipt(id):
     """
     API Xóa hoàn toàn thông tin một phiếu nhập hoặc xuất
@@ -620,6 +652,8 @@ def delete_receipt(id):
     tags:
       - Receipt
     summary: Xóa phiếu nhập/xuất theo ID
+    security:
+      - Bearer: []
     parameters:
       - name: id
         in: path
@@ -642,6 +676,10 @@ def delete_receipt(id):
                 message:
                   type: string
                   example: "Xóa thông tin phiếu thành công"
+      401:
+        description: "Chưa xác thực hoặc token không hợp lệ"
+      403:
+        description: "Bạn không có quyền thực hiện hành động này"
       404:
         description: Không tìm thấy phiếu với ID đã cho
         content:
@@ -669,6 +707,9 @@ def delete_receipt(id):
                   type: string
                   example: "Đã có lỗi khi xóa thông tin phiếu"
     """
+    claims = get_jwt()
+    if claims.get("role") != "ADMIN":
+      abort(403, description="Bạn không có quyền thực hiện hành động này")
     exist_receipt = query_db("SELECT id FROM Receipts WHERE id = ?", (id,), one=True)
     if exist_receipt is None:
         return jsonify({"success": False, "message": "Thông tin phiếu không tồn tại"}), 404

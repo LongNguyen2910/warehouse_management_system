@@ -1,16 +1,20 @@
 from flask import Blueprint, jsonify, request, abort
+from flask_jwt_extended import get_jwt, jwt_required
 
 import db_helper
 from db_helper import query_db, execute_db
 products_bp = Blueprint('products', __name__)
 
 @products_bp.route('/', methods=['GET'])
+@jwt_required()
 def get_products():
     """
     API Lấy danh sách các sản phẩm có trong hệ thống
     ---
     tags:
       - Products
+    security:
+      - Bearer: []
     responses:
       200:
         description: Danh sách các sản phẩm hiện có
@@ -32,6 +36,8 @@ def get_products():
                 type: string
               created_at:
                  type: string
+      401:
+        description: "Chưa xác thực hoặc token không hợp lệ"
     """
     #Show all products from database
     products =  query_db("select products.id as id, sku, products.name as product_name, min_stock, description, created_at, categories.name as category_name "
@@ -39,12 +45,15 @@ def get_products():
     return jsonify(products),200
 
 @products_bp.route('/<id>', methods=['GET'])
+@jwt_required()
 def get_product_id(id):
     """
         API Lấy thông tin sản phẩm theo ID
         ---
         tags:
           - Products
+        security:
+          - Bearer: []
         parameters:
           - name: id
             in: path
@@ -77,12 +86,15 @@ def get_product_id(id):
     return jsonify(product_id),200
 
 @products_bp.route('/name=<name>', methods=['GET'])
+@jwt_required()
 def get_product_name(name):
     """
         API Lấy thông tin sản phẩm theo ID
         ---
         tags:
           - Products
+        security:
+          - Bearer: []
         parameters:
           - name: name
             in: path
@@ -106,6 +118,8 @@ def get_product_name(name):
                     type: string
                 created_at:
                     type: string
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
           404:
             description: sản phẩm không tìm thấy hoặc không tồn tại
         """
@@ -116,12 +130,15 @@ def get_product_name(name):
     return jsonify(product_name),200
 
 @products_bp.route('/', methods=['POST'])
+@jwt_required()
 def add_product():
     """
         API Thêm sản phẩm mới
         ---
         tags:
           - Products
+        security:
+          - Bearer: []
         parameters:
           - name: body
             in: body
@@ -146,6 +163,8 @@ def add_product():
             description: Thêm thành công
           400:
             description: Dữ liệu không hợp lệ
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
           500:
             description: "Đã xảy ra lỗi khi thêm sản phẩm mới"
         """
@@ -186,12 +205,15 @@ def add_product():
         abort(500,description="Đã xảy ra lỗi khi thêm sản phẩm mới vào")
 
 @products_bp.route('/<id>', methods=['PUT'])
+@jwt_required()
 def update_product(id):
     """
         API sửa thông tin sản phẩm
         ---
         tags:
           - Products
+        security:
+          - Bearer: []
         parameters:
           - name: body
             in: body
@@ -216,10 +238,18 @@ def update_product(id):
             description: sửa thông tin thành công
           400:
             description: Dữ liệu không hợp lệ
+          401:
+            description: "Chưa xác thực hoặc token không hợp lệ"
+          403:
+            description: "Bạn không có quyền thực hiện hành động này"
+          404:
+            description: sản phẩm không tìm thấy hoặc không tồn tại
           500:
             description: "Đã xảy ra lỗi khi sửa thông tin sản phẩm"
         """
     #Receiving data in JSON file format
+    if get_jwt().get("role") != "MANAGER":
+      abort(403, description="Bạn không có quyền thực hiện hành động này")
     data = request.get_json()
     sku = data.get('sku')
     name = data.get('product_name')
@@ -239,7 +269,7 @@ def update_product(id):
 
     exist_product = query_db("select id from Products where id = ?", (id,), one=True)
     if exist_product is None:
-        abort(400,description="Sản phẩm không tồn tại")
+        abort(404, description="Sản phẩm không tồn tại")
 
     exist_category = query_db("select id from Categories where name = ?", (category,), one=True)
     if exist_category is None:
@@ -254,12 +284,15 @@ def update_product(id):
         abort(500, description="Đã xảy ra lỗi khi cập nhật thông tin sản phẩm")
 
 @products_bp.route('/<id>', methods=['DELETE'])
+@jwt_required()
 def delete_product(id):
     """
         API Xóa thông tin sản phẩm
         ---
         tags:
           - Products
+        security:
+          - Bearer: []
         parameters:
           - name: id
             in: path
@@ -291,12 +324,18 @@ def delete_product(id):
                   items:
                     type: string
                   example: ["Nhật ký Kho (Inventory_Logs)", "Kho (Inventory)"]
+          403:
+            description: "Bạn không có quyền thực hiện hành động này"
+          404:
+            description: sản phẩm không tìm thấy hoặc không tồn tại
           500:
             description: "Đã xảy ra lỗi hệ thống khi xóa thông tin sản phẩm"
         """
+    if get_jwt().get("role") != "MANAGER":
+      abort(403, description="Bạn không có quyền thực hiện hành động này")
     exist_product = query_db("select id from Products where id = ?", (id,), one=True)
     if exist_product is None:
-        abort(400, description="Sản phẩm không tồn tại")
+        abort(404, description="Sản phẩm không tồn tại")
 
     success = execute_db("DELETE FROM Products WHERE id = ?", (id,))
     if success:
