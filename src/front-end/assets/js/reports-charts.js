@@ -2,10 +2,14 @@
 async function loadInventoryByProductChart() {
   try {
     const API_URL = "http://localhost:5000/api/reports";
-    const response = await fetch(`${API_URL}`);
+    const response = await fetch(`${API_URL}`, { credentials: "include" });
     const result = await response.json();
 
     if (!response.ok || !result.success) {
+      if (response.status == 401) {
+        logout();
+        return;
+      }
       document.querySelector("#inventoryByProductChart").innerHTML = `
           <div class="alert alert-danger">
             ${result.message}
@@ -23,8 +27,8 @@ async function loadInventoryByProductChart() {
         productMap[item.product_name] += item.quantity;
       });
 
-      const categories = Object.keys(productMap);
-      const data = Object.values(productMap);
+      const categories = Object.keys(productMap).slice(0, 5);
+      const data = Object.values(productMap).slice(0, 5);
 
       const options = {
         chart: { type: "bar", height: 350 },
@@ -51,10 +55,14 @@ async function loadInventoryByProductChart() {
 // Chart 2: Low Stock Products (Bar Chart)
 async function loadLowStockChart() {
   const API_URL = "http://localhost:5000/api/reports/low-stock";
-  const response = await fetch(`${API_URL}`);
+  const response = await fetch(`${API_URL}`, { credentials: "include" });
   const result = await response.json();
 
   if (!response.ok || !result.success) {
+    if (response.status === 401) {
+      logout();
+      return;
+    }
     document.querySelector("#lowStockChart").innerHTML = `
         <div class="alert alert-danger">
           ${result.message}
@@ -65,9 +73,9 @@ async function loadLowStockChart() {
 
   if (result.success && result.data) {
     const data = result.data;
-    const categories = data.map((item) => item.product_name);
-    const needToImport = data.map((item) => item.need_to_import);
-    const currentStock = data.map((item) => item.total_quantity);
+    const categories = data.map((item) => item.product_name).slice(0, 5);
+    const needToImport = data.map((item) => item.need_to_import).slice(0, 5);
+    const currentStock = data.map((item) => item.total_quantity).slice(0, 5);
 
     const options = {
       chart: { type: "bar", height: 350 },
@@ -87,11 +95,15 @@ async function loadLowStockChart() {
 }
 // Chart 3: Income
 async function loadIncomeChart() {
-  const API_URL = "http://localhost:5000/api/inventory/outbound";
-  const response = await fetch(API_URL);
+  const API_URL = "http://localhost:5000/api/receipts/outbound";
+  const response = await fetch(`${API_URL}`, { credentials: "include" });
 
   const data = await response.json();
   // if (!response.ok || !data.success) {
+  //   if (response.status === 401) {
+  //     logout();
+  //     return;
+  //   }
   //   document.querySelector("#incomeChart").innerHTML = `
   //       <div class="alert alert-danger">
   //         ${data.message}
@@ -201,9 +213,9 @@ async function loadIncomeChart() {
 // Chart 3: Expenses (Line/Area Chart)
 async function loadExpensesChart() {
   try {
-    const API_URL = "http://localhost:5000/api/inventory/inbound";
+    const API_URL = "http://localhost:5000/api/receipts/inbound";
     console.log("Fetching expenses from:", API_URL);
-    const response = await fetch(API_URL);
+    const response = await fetch(API_URL, { credentials: "include" });
 
     if (!response.ok) {
       console.error("API error:", response.status, response.statusText);
@@ -324,12 +336,12 @@ async function loadExpensesChart() {
 // Chart 3: Profit (Line/Area Chart)
 async function loadProfitChart() {
   try {
-    const API_URL_INCOME = "http://localhost:5000/api/inventory/outbound";
-    const API_URL_EXPENSES = "http://localhost:5000/api/inventory/inbound";
+    const API_URL_INCOME = "http://localhost:5000/api/receipts/outbound";
+    const API_URL_EXPENSES = "http://localhost:5000/api/receipts/inbound";
 
     const [incomeRes, expensesRes] = await Promise.all([
-      fetch(API_URL_INCOME),
-      fetch(API_URL_EXPENSES),
+      fetch(API_URL_INCOME, { credentials: "include" }),
+      fetch(API_URL_EXPENSES, { credentials: "include" }),
     ]);
 
     if (!incomeRes.ok || !expensesRes.ok) {
@@ -508,5 +520,5 @@ document.addEventListener("DOMContentLoaded", function () {
     loadLowStockChart();
     loadIncomeChart();
     setupChartTabs();
-  }, 500);
+  }, 100);
 });

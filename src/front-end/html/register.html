@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 
 <!-- =========================================================
 * Sneat - Bootstrap 5 HTML Admin Template - Pro | v1.0.0
@@ -27,12 +27,16 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
     />
 
-    <title>Register Basic - Pages | Sneat - Bootstrap 5 HTML Admin Template - Pro</title>
+    <title>Register</title>
 
     <meta name="description" content="" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="../assets/img/favicon/favicon.ico" />
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="../assets/img/favicon/favicon.ico"
+    />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -46,12 +50,23 @@
     <link rel="stylesheet" href="../assets/vendor/fonts/boxicons.css" />
 
     <!-- Core CSS -->
-    <link rel="stylesheet" href="../assets/vendor/css/core.css" class="template-customizer-core-css" />
-    <link rel="stylesheet" href="../assets/vendor/css/theme-default.css" class="template-customizer-theme-css" />
+    <link
+      rel="stylesheet"
+      href="../assets/vendor/css/core.css"
+      class="template-customizer-core-css"
+    />
+    <link
+      rel="stylesheet"
+      href="../assets/vendor/css/theme-default.css"
+      class="template-customizer-theme-css"
+    />
     <link rel="stylesheet" href="../assets/css/demo.css" />
 
     <!-- Vendors CSS -->
-    <link rel="stylesheet" href="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+    <link
+      rel="stylesheet"
+      href="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css"
+    />
 
     <!-- Page CSS -->
     <!-- Page -->
@@ -102,21 +117,44 @@
                           id="path-5"
                         ></path>
                       </defs>
-                      <g id="g-app-brand" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                        <g id="Brand-Logo" transform="translate(-27.000000, -15.000000)">
-                          <g id="Icon" transform="translate(27.000000, 15.000000)">
-                            <g id="Mask" transform="translate(0.000000, 8.000000)">
+                      <g
+                        id="g-app-brand"
+                        stroke="none"
+                        stroke-width="1"
+                        fill="none"
+                        fill-rule="evenodd"
+                      >
+                        <g
+                          id="Brand-Logo"
+                          transform="translate(-27.000000, -15.000000)"
+                        >
+                          <g
+                            id="Icon"
+                            transform="translate(27.000000, 15.000000)"
+                          >
+                            <g
+                              id="Mask"
+                              transform="translate(0.000000, 8.000000)"
+                            >
                               <mask id="mask-2" fill="white">
                                 <use xlink:href="#path-1"></use>
                               </mask>
                               <use fill="#696cff" xlink:href="#path-1"></use>
                               <g id="Path-3" mask="url(#mask-2)">
                                 <use fill="#696cff" xlink:href="#path-3"></use>
-                                <use fill-opacity="0.2" fill="#FFFFFF" xlink:href="#path-3"></use>
+                                <use
+                                  fill-opacity="0.2"
+                                  fill="#FFFFFF"
+                                  xlink:href="#path-3"
+                                ></use>
                               </g>
                               <g id="Path-4" mask="url(#mask-2)">
                                 <use fill="#696cff" xlink:href="#path-4"></use>
-                                <use fill-opacity="0.2" fill="#FFFFFF" xlink:href="#path-4"></use>
+                                <use
+                                  fill-opacity="0.2"
+                                  fill="#FFFFFF"
+                                  xlink:href="#path-4"
+                                ></use>
                               </g>
                             </g>
                             <g
@@ -124,21 +162,26 @@
                               transform="translate(19.000000, 11.000000) rotate(-300.000000) translate(-19.000000, -11.000000) "
                             >
                               <use fill="#696cff" xlink:href="#path-5"></use>
-                              <use fill-opacity="0.2" fill="#FFFFFF" xlink:href="#path-5"></use>
+                              <use
+                                fill-opacity="0.2"
+                                fill="#FFFFFF"
+                                xlink:href="#path-5"
+                              ></use>
                             </g>
                           </g>
                         </g>
                       </g>
                     </svg>
                   </span>
-                  <span class="app-brand-text demo text-body fw-bolder">Sneat</span>
+                  <span class="app-brand-text demo text-body fw-bolder"
+                    >First</span
+                  >
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-2">Adventure starts here 🚀</h4>
-              <p class="mb-4">Make your app management easy and fun!</p>
+              <div id="alertContainer"></div>
 
-              <form id="formAuthentication" class="mb-3" action="index.html" method="POST">
+              <form id="formAuthentication" class="mb-3">
                 <div class="mb-3">
                   <label for="username" class="form-label">Username</label>
                   <input
@@ -146,13 +189,9 @@
                     class="form-control"
                     id="username"
                     name="username"
-                    placeholder="Enter your username"
+                    placeholder="Enter your username (3-50 characters, no spaces)"
                     autofocus
                   />
-                </div>
-                <div class="mb-3">
-                  <label for="email" class="form-label">Email</label>
-                  <input type="text" class="form-control" id="email" name="email" placeholder="Enter your email" />
                 </div>
                 <div class="mb-3 form-password-toggle">
                   <label class="form-label" for="password">Password</label>
@@ -165,25 +204,28 @@
                       placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
                       aria-describedby="password"
                     />
-                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                    <span
+                      class="input-group-text cursor-pointer toggle-password"
+                      ><i class="bx bx-hide"></i
+                    ></span>
                   </div>
+                  <small class="text-muted d-block mt-2">
+                    Password must contain at least 8 characters, including
+                    uppercase, lowercase, numbers, and special characters.
+                  </small>
                 </div>
-
-                <div class="mb-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms" />
-                    <label class="form-check-label" for="terms-conditions">
-                      I agree to
-                      <a href="javascript:void(0);">privacy policy & terms</a>
-                    </label>
-                  </div>
-                </div>
-                <button class="btn btn-primary d-grid w-100">Sign up</button>
+                <button
+                  type="submit"
+                  class="btn btn-primary d-grid w-100"
+                  id="submitBtn"
+                >
+                  Sign up
+                </button>
               </form>
 
               <p class="text-center">
                 <span>Already have an account?</span>
-                <a href="auth-login-basic.html">
+                <a href="login.html">
                   <span>Sign in instead</span>
                 </a>
               </p>
@@ -221,6 +263,163 @@
     <script src="../assets/js/main.js"></script>
 
     <!-- Page JS -->
+    <script>
+      // Show alert message
+      function showAlert(type, message) {
+        const alertClass =
+          type === "error"
+            ? "alert-danger"
+            : type === "success"
+              ? "alert-success"
+              : "alert-info";
+        const html = `<div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+        $("#alertContainer").html(html);
+      }
+
+      // Validate password strength
+      function validatePasswordStrength(password) {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(
+          password,
+        );
+
+        if (password.length < minLength) {
+          return {
+            valid: false,
+            message: "Password must be at least 8 characters long.",
+          };
+        }
+        if (!hasUpperCase) {
+          return {
+            valid: false,
+            message: "Password must contain at least one uppercase letter.",
+          };
+        }
+        if (!hasLowerCase) {
+          return {
+            valid: false,
+            message: "Password must contain at least one lowercase letter.",
+          };
+        }
+        if (!hasNumbers) {
+          return {
+            valid: false,
+            message: "Password must contain at least one number.",
+          };
+        }
+        if (!hasSpecialChar) {
+          return {
+            valid: false,
+            message: "Password must contain at least one special character.",
+          };
+        }
+
+        return { valid: true, message: "Password is strong." };
+      }
+
+      // Validate username
+      function validateUsername(username) {
+        if (!username || username.trim().length === 0) {
+          return { valid: false, message: "Username cannot be empty." };
+        }
+        username = username.trim();
+        if (username.length < 3 || username.length > 50) {
+          return {
+            valid: false,
+            message: "Username must be between 3 and 50 characters.",
+          };
+        }
+        if (/\s/.test(username)) {
+          return { valid: false, message: "Username cannot contain spaces." };
+        }
+        return { valid: true, message: "Username is valid." };
+      }
+
+      // Handle form submit
+      $("#formAuthentication").on("submit", function (e) {
+        e.preventDefault();
+
+        const username = $("#username").val();
+        const password = $("#password").val();
+
+        // Validate username
+        const usernameValidation = validateUsername(username);
+        if (!usernameValidation.valid) {
+          showAlert("error", usernameValidation.message);
+          return;
+        }
+
+        // Validate password
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.valid) {
+          showAlert("error", passwordValidation.message);
+          return;
+        }
+
+        // Show loading state
+        const submitBtn = $("#submitBtn");
+        const originalText = submitBtn.text();
+        submitBtn
+          .prop("disabled", true)
+          .html(
+            '<span class="d-inline-flex align-items-center justify-content-center w-100"><span class="spinner-border spinner-border-sm me-2 text-light" role="status" aria-hidden="true"></span><span>Signing up...</span></span>',
+          );
+
+        // Call API
+        $.ajax({
+          url: "http://localhost:5000/api/users",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            user_name: username,
+            password: password,
+          }),
+          success: function (res) {
+            if (res.success) {
+              showAlert(
+                "success",
+                "Registration successful! Redirecting to login...",
+              );
+              setTimeout(function () {
+                window.location.href = "login.html";
+              }, 1000);
+            } else {
+              showAlert(
+                "error",
+                res.message || "Registration failed. Please try again.",
+              );
+              submitBtn.prop("disabled", false).text(originalText);
+            }
+          },
+          error: function (xhr) {
+            let errorMsg = "An error occurred. Please try again.";
+
+            if (xhr.responseJSON) {
+              errorMsg =
+                xhr.responseJSON.message ||
+                xhr.responseJSON.description ||
+                errorMsg;
+            } else if (xhr.status === 0) {
+              errorMsg =
+                "Cannot connect to server. Please check your connection.";
+            } else if (xhr.status === 400) {
+              errorMsg = "Invalid input. Please check your information.";
+            } else if (xhr.status === 500) {
+              errorMsg = "Server error. Please try again later.";
+            }
+
+            showAlert("error", errorMsg);
+            submitBtn.prop("disabled", false).text(originalText);
+          },
+        });
+      });
+    </script>
 
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>

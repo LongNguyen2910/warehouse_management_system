@@ -1,5 +1,6 @@
 import flask
 from flask import Blueprint, abort, send_file
+from flask_jwt_extended import jwt_required
 from db_helper import query_db
 from openpyxl.styles import Alignment
 from openpyxl.utils import get_column_letter
@@ -16,12 +17,15 @@ def success_response(data):
 
 #Ton Kho
 @reports_bp.route('', methods=['GET'])
+@jwt_required()
 def getTonKho():
     """
     API lấy danh sách tồn kho
     ---
     tags:
       - Reports
+    security:
+      - Bearer: []
     responses:
       200:
         description: Danh sách tồn kho
@@ -44,12 +48,15 @@ def getTonKho():
 
 #Low-stock
 @reports_bp.route('/low-stock', methods=['GET'])
+@jwt_required()
 def getLowStock():
     """
     API sản phẩm sắp hết hàng
     ---
     tags:
       - Reports
+    security:
+      - Bearer: []
     responses:
       200:
         description: Danh sách sản phẩm sắp hết
@@ -74,12 +81,15 @@ def getLowStock():
 
 #History
 @reports_bp.route('/history/<string:sku>', methods=['GET'])
+@jwt_required() 
 def getInventoryHistory(sku):
     """
     API lịch sử nhập/xuất
     ---
     tags:
       - Reports
+    security:
+      - Bearer: []
     parameters:
       - name: sku
         in: path
@@ -110,12 +120,15 @@ def getInventoryHistory(sku):
 
 #Transfer
 @reports_bp.route('/transfer-history', methods=['GET'])
+@jwt_required()
 def getTransferHistory():
     """
     API lịch sử điều chuyển
     ---
     tags:
       - Reports
+    security:
+      - Bearer: []
     parameters:
       - name: sku
         in: query
@@ -156,12 +169,15 @@ def getTransferHistory():
 
 #Receipts
 @reports_bp.route('/receipt', methods=['GET'])
+@jwt_required()
 def getReceiptHistory():
     """
     API lịch sử nhập/xuất (Receipts)
     ---
     tags:
       - Reports
+    security:
+      - Bearer: []
     responses:
       200:
         description: Lịch sử phiếu nhập/xuất
@@ -192,12 +208,15 @@ def getReceiptHistory():
 
 #Export
 @reports_bp.route('/export/excel', methods=['GET'])
+@jwt_required()
 def export():
     """
     API export Excel
     ---
     tags:
       - Reports
+    security:
+      - Bearer: []
     produces:
       - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
     responses:

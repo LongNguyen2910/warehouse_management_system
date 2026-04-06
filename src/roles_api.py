@@ -13,6 +13,8 @@ def get_roles():
   ---
   tags:
     - Roles
+  security:
+    - Bearer: []
   parameters:
     - name: id
       in: query
@@ -41,9 +43,13 @@ def get_roles():
                 role_name:
                   type: string
                   example: "ADMIN"
+    403:
+      description: "Bạn không có quyền thực hiện hành động này"
     404:
       description: "Không tim thấy vai trò nào phù hợp với tiêu chí tìm kiếm"
   """
+  if get_jwt().get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   id = flask.request.args.get("id")
   role_name = flask.request.args.get("role_name")
   query = "SELECT * FROM Roles WHERE"
@@ -72,6 +78,8 @@ def create_role():
   ---
   tags:
     - Roles
+  security:
+    - Bearer: []
   parameters:
     - name: body
       in: body
@@ -88,9 +96,13 @@ def create_role():
       description: "Vai trò mới đã được tạo"
     400:
       description: "Yêu cầu không hợp lệ (ví dụ: thiếu tên vai trò hoặc vai trò đã tồn tại)"
+    403:
+      description: "Bạn không có quyền thực hiện hành động này"
     500:
       description: "Đã xảy ra lỗi khi tạo vai trò mới"
   """
+  if get_jwt().get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   role_name = payload.get("role_name")
   if is_empty(role_name):
@@ -142,8 +154,7 @@ def update_role(id):
     500:
       description: "Đã xảy ra lỗi khi cập nhật vai trò"
     """
-  claims = get_jwt()
-  if claims.get("role") != "ADMIN":
+  if get_jwt().get("role") != "ADMIN":
     abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   role_name = payload.get("role_name")
@@ -157,6 +168,7 @@ def update_role(id):
       abort(500, description="Đã xảy ra lỗi khi cập nhật vai trò")
 
 @roles_bp.route('/<id>', methods=['DELETE'])
+@jwt_required()
 def delete_role(id):
   """
   API Xóa một vai trò
@@ -182,8 +194,7 @@ def delete_role(id):
     404:
       description: "Vai trò không tồn tại"
   """
-  claims = get_jwt()
-  if claims.get("role") != "ADMIN":
+  if get_jwt().get("role") != "ADMIN":
     abort(403, description="Bạn không có quyền thực hiện hành động này")
   dependency = query_db("SELECT id FROM Users WHERE role_id = ?", (id,), one=True)
   existing = query_db("SELECT id FROM Roles WHERE id = ?", (id,), one=True)
