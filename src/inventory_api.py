@@ -174,6 +174,7 @@ def update_inventory(id):
 # ================= SEARCH PRODUCT NAME =================
 @inventory_bp.route('/search/product', methods=['GET'])
 def search_product():
+
     name = request.args.get("name")
 
     if not name:
