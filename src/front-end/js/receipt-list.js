@@ -18,6 +18,10 @@ function loadInboundReceipts() {
       displayReceipts(data, "inboundList", "inbound");
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       $("#inboundList").html(
         '<div class="text-center text-danger py-4">Lỗi tải dữ liệu: ' +
           (xhr.responseJSON.message || xhr.statusText) +
@@ -36,6 +40,10 @@ function loadOutboundReceipts() {
       displayReceipts(data, "outboundList", "outbound");
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       $("#outboundList").html(
         '<div class="text-center text-danger py-4">Lỗi tải dữ liệu: ' +
           (xhr.responseJSON.message || xhr.statusText) +
@@ -158,6 +166,10 @@ function deleteReceipt(id, type, event) {
       loadAllReceipts();
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       let errorMsg = "Xóa thất bại!";
       if (xhr.status === 404) {
         errorMsg = "Không tìm thấy phiếu!";

@@ -42,7 +42,11 @@ function loadWarehouses() {
       }
       $("#warehouse").html(options);
     },
-    error: function () {
+    error: function (res) {
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       $("#warehouse").html('<option value="">Lỗi tải dữ liệu</option>');
       showToast("Không thể tải danh sách kho", "danger");
     },
@@ -66,6 +70,10 @@ function loadStaff() {
       $("#staff").html(options);
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       console.error("Lỗi tải staff:", xhr);
       $("#staff").html('<option value="">Lỗi tải dữ liệu</option>');
       showToast("Không thể tải danh sách nhân viên", "danger");
@@ -93,6 +101,10 @@ function loadProducts() {
       updateAllProductSelects();
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       console.error("Lỗi tải sản phẩm:", xhr);
       showToast("Lỗi tải danh sách sản phẩm", "danger");
     },
@@ -251,6 +263,10 @@ function submitReceipt() {
       }, 1500);
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       console.error("❌ Lỗi:", xhr);
       let errorMsg = "Lưu thất bại!";
       if (xhr.responseJSON && xhr.responseJSON.message) {

@@ -70,6 +70,10 @@ function getAllProducts() {
       document.getElementById("productsTableBody").innerHTML = table;
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       showToast(
         "Lỗi tải danh sách: " + (xhr.responseJSON.message || xhr.statusText),
         "danger",
@@ -150,6 +154,10 @@ function executeDelete(id, productName) {
       getAllProducts();
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       const res = xhr.responseJSON;
 
       if (xhr.status === 409 && res.error_code === "DB_FOREIGN_KEY_CONFLICT") {

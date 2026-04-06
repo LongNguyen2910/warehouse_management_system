@@ -26,7 +26,11 @@ function displayCategory() {
     xhrFields: {
       withCredentials: true,
     },
-    error: function (res) {
+    error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       alert($.ajax.error);
     },
     success: function (res) {
@@ -73,7 +77,11 @@ function loadProduct(id) {
       document.getElementById("basic-default-created-at").value =
         formatDatetimeLocal(p.created_at);
     },
-    error: function () {
+    error: function (res) {
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       showAlert("Không tải được thông tin sản phẩm.", "danger");
     },
   });
@@ -151,6 +159,10 @@ function submitForm() {
         "product-table.html?toast=" + encodeURIComponent(msg);
     },
     error: function (xhr) {
+      if (xhr.status === 401) {
+        logout();
+        return;
+      }
       console.log("Error response:", xhr.responseJSON); // debug — xem backend trả về lỗi gì
       const msg = xhr.responseJSON.message || "Lưu thất bại, vui lòng thử lại.";
       showAlert(msg, "danger");
