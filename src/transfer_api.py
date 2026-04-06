@@ -1,11 +1,25 @@
 from flask import Blueprint, request, jsonify, abort
 from db_helper import query_db, execute_db, get_db_connection
-import math
+import requests
 
 transfer_bp = Blueprint('transfer', __name__)
 
-def calculate_distance(lat1, lon1, lat2, lon2):
-    return math.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2)
+MAPBOX_TOKEN = "YOUR_MAPBOX_TOKEN"
+
+def get_route_distance(lat1, lon1, lat2, lon2):
+    url = f"https://api.mapbox.com/directions/v5/mapbox/driving/{lon1},{lat1};{lon2},{lat2}"
+    params = {
+        "access_token": MAPBOX_TOKEN,
+        "overview": "false"
+    }
+
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+
+        return data["routes"][0]["distance"]  # mét
+    except:
+        return float("inf")
 
 VALID_STATUS = ["PENDING", "APPROVED"]
 @transfer_bp.route('/', methods=['GET'])
@@ -234,26 +248,25 @@ def update_transfer_status(id):
 @transfer_bp.route('/suggest', methods=['GET'])
 def suggest_warehouse():
     """
-    Suggest best warehouse
-    ---
-    tags:
-      - Transfers
-    parameters:
-      - in: query
-        name: product_id
-        type: integer
-        required: true
-      - in: query
-        name: to_warehouse_id
-        type: integer
-        required: true
-    responses:
-      200:
-        description: Success
-      400:
-        description: Invalid input
-    """
-    # FIX: ép kiểu int
+        Suggest best warehouse
+        ---
+        tags:
+          - Transfers
+        parameters:
+          - in: query
+            name: product_id
+            type: integer
+            required: true
+          - in: query
+            name: to_warehouse_id
+            type: integer
+            required: true
+        responses:
+          200:
+            description: Success
+          400:
+            description: Invalid input
+        """
     product_id = request.args.get('product_id', type=int)
     to_warehouse_id = request.args.get('to_warehouse_id', type=int)
 
@@ -266,32 +279,30 @@ def suggest_warehouse():
         one=True
     )
 
-    if not target:
-        abort(404, "Target warehouse not found")
-
     inventories = query_db(
         """
-        SELECT i.*, w.Latitude, w.Longitude
+        SELECT i.*, w.name, w.Latitude, w.Longitude
         FROM Inventory i
-        JOIN Warehouses w ON i.warehouse_id = w.id
-        WHERE product_id=? AND quantity > 0
+                 JOIN Warehouses w ON i.warehouse_id = w.id
+        WHERE product_id = ?
+          AND quantity > 0
         """,
         (product_id,)
     )
+    inventories = inventories[:5]
 
     best = None
-    best_score = None
+    best_score = float("inf")
 
     for inv in inventories:
-        dist = calculate_distance(
+        dist = get_route_distance(
             inv['Latitude'], inv['Longitude'],
             target['Latitude'], target['Longitude']
         )
 
-        # ưu tiên gần + nhiều hàng
-        score = dist - inv['quantity'] * 0.01
+        score = dist - inv['quantity'] * 50  # chỉnh trọng số
 
-        if best_score is None or score < best_score:
+        if score < best_score:
             best_score = score
             best = inv
 
@@ -299,6 +310,7 @@ def suggest_warehouse():
         "success": True,
         "data": best
     })
+
 @transfer_bp.route('/<int:id>', methods=['DELETE'])
 def delete_transfer(id):
     transfer = query_db(

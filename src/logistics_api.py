@@ -290,8 +290,8 @@ def update_shipment(id):
         "success": True,
         "data": "Shipment updated"
     })
-@logistics_bp.route('/shipments/<int:id>', methods=['GET'])
-def get_shipment_by_id(id):
+@logistics_bp.route('/shipments/<int:transfer_id>', methods=['GET'])
+def get_shipment_by_id(transfer_id):
     """
     Get shipment by ID
     ---
@@ -340,18 +340,17 @@ def get_shipment_by_id(id):
       404:
         description: Không tìm thấy shipment với ID này
     """
-    shipment = query_db(
+    shipments = query_db(
         "SELECT * FROM Shipments WHERE transfer_id=?",
-        (id,),
-        one=True
+        (transfer_id,),
+        one=False
     )
-
-    if not shipment:
-        abort(404, "Shipment not found")
+    if not shipments:
+        abort(404, "No shipments found for this transfer ID")
 
     return jsonify({
         "success": True,
-        "data": dict(shipment)
+        "data": [dict(s) for s in shipments]
     })
 
 @logistics_bp.route('/shipments/<int:id>', methods=['DELETE'])
