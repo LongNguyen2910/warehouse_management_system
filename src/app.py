@@ -14,6 +14,7 @@ from logistics_api import logistics_bp
 from reports_api import reports_bp
 from users_api import users_bp
 from roles_api import roles_bp
+from transfer_api import transfer_bp
 from warehouses_api import warehouses_bp
 from product_api import products_bp
 from categories_api import categories_bp
@@ -48,6 +49,7 @@ swagger = Swagger(app)
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
 app.register_blueprint(logistics_bp, url_prefix='/api/logistics')
+app.register_blueprint(transfer_bp, url_prefix='/api/transfers')
 app.register_blueprint(reports_bp, url_prefix='/api/reports')
 app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(roles_bp, url_prefix='/api/roles')

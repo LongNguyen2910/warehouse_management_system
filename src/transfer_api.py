@@ -1,11 +1,25 @@
 from flask import Blueprint, request, jsonify, abort
 from db_helper import query_db, execute_db, get_db_connection
-import math
+import requests
 
 transfer_bp = Blueprint('transfer', __name__)
 
-def calculate_distance(lat1, lon1, lat2, lon2):
-    return math.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2)
+MAPBOX_TOKEN = "YOUR_MAPBOX_TOKEN"
+
+def get_route_distance(lat1, lon1, lat2, lon2):
+    url = f"https://api.mapbox.com/directions/v5/mapbox/driving/{lon1},{lat1};{lon2},{lat2}"
+    params = {
+        "access_token": MAPBOX_TOKEN,
+        "overview": "false"
+    }
+
+    try:
+        res = requests.get(url, params=params)
+        data = res.json()
+
+        return data["routes"][0]["distance"]  # mét
+    except:
+        return float("inf")
 
 VALID_STATUS = ["PENDING", "APPROVED"]
 @transfer_bp.route('/', methods=['GET'])
@@ -26,7 +40,7 @@ def get_transfers():
         "data": data
     })
 
-@transfer_bp.route('/transfers', methods=['POST'])
+@transfer_bp.route('/', methods=['POST'])
 def create_transfer():
     """
     Create transfer order
@@ -80,7 +94,6 @@ def create_transfer():
     if not from_wh or not to_wh:
         abort(404, "Warehouse not found")
 
-    # tạo lệnh (status = PENDING)
     execute_db(
         """
         INSERT INTO Transfer_Orders (from_warehouse_id, to_warehouse_id, staff_id, status)
@@ -89,7 +102,6 @@ def create_transfer():
         (data['from_warehouse_id'], data['to_warehouse_id'], data['staff_id'])
     )
 
-    # lấy id mới nhất
     transfer = query_db("SELECT TOP 1 * FROM Transfer_Orders ORDER BY id DESC", one=True)
     transfer_id = transfer['id']
 
@@ -97,26 +109,6 @@ def create_transfer():
         product_id = item['product_id']
         qty = item['quantity']
 
-        stock = query_db(
-            "SELECT quantity FROM Inventory WHERE warehouse_id=? AND product_id=?",
-            (data['from_warehouse_id'], product_id),
-            one=True
-        )
-
-        if not stock or stock['quantity'] < qty:
-            abort(400, f"Not enough stock for product {product_id}")
-
-        # TRỪ KHO
-        execute_db(
-            """
-            UPDATE Inventory
-            SET quantity = quantity - ?
-            WHERE warehouse_id=? AND product_id=?
-            """,
-            (qty, data['from_warehouse_id'], product_id)
-        )
-
-        # lưu chi tiết
         execute_db(
             """
             INSERT INTO Transfer_Details (transfer_id, product_id, quantity)
@@ -134,105 +126,147 @@ def create_transfer():
     })
 
 
-@transfer_bp.route('/transfers/<int:id>', methods=['PUT'])
+@transfer_bp.route('/<int:id>', methods=['PUT'])
+
 def update_transfer_status(id):
     """
-    Update transfer status
-    ---
-    tags:
-      - Transfers
-    parameters:
-      - in: path
-        name: id
-        type: integer
-        required: true
-        description: Transfer order ID
-      - in: body
-        name: body
-        schema:
-          type: object
-          required:
-            - status
-          properties:
-            status:
-              type: string
-              enum: ["PENDING", "APPROVED"]
-              example: "APPROVED"
-    responses:
-      200:
-        description: Status updated
-      400:
-        description: Invalid input or not enough stock
-      404:
-        description: Transfer not found
-      500:
-        description: Update failed
-    """
+        Update transfer status
+        ---
+        tags:
+          - Transfers
+        parameters:
+          - in: path
+            name: id
+            type: integer
+            required: true
+            description: Transfer order ID
+          - in: body
+            name: body
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: ["PENDING", "APPROVED"]
+                  example: "APPROVED"
+        responses:
+          200:
+            description: Status updated
+          400:
+            description: Invalid input or not enough stock
+          404:
+            description: Transfer not found
+          500:
+            description: Update failed
+        """
     data = request.json
     if not data or 'status' not in data:
-        abort(400, "Missing status")
+        return jsonify({"success": False, "message": "Missing status"}), 400
 
     status = data['status']
     if status not in VALID_STATUS:
-        abort(400, "Invalid status")
+        return jsonify({"success": False, "message": "Invalid status"}), 400
 
-    transfer = query_db("SELECT * FROM Transfer_Orders WHERE id=?", (id,), one=True)
+    transfer = query_db(
+        "SELECT * FROM Transfer_Orders WHERE id=?",
+        (id,),
+        one=True
+    )
+
     if not transfer:
-        abort(404, "Transfer not found")
+        return jsonify({"success": False, "message": "Transfer not found"}), 404
 
     old_status = transfer['status']
+
     if old_status == status:
         return jsonify({"success": True, "data": "Status unchanged"})
 
-    # Chỉ trừ kho nếu status đổi sang APPROVED
+    if old_status == "APPROVED" and status != "APPROVED":
+        return jsonify({
+            "success": False,
+            "message": "Cannot change status after APPROVED"
+        }), 400
+
+    # ================== APPROVED ==================
     if status == "APPROVED":
-        details = query_db("SELECT * FROM Transfer_Details WHERE transfer_id=?", (id,))
+        details = query_db(
+            "SELECT * FROM Transfer_Details WHERE transfer_id=?",
+            (id,)
+        )
+
         conn = get_db_connection()
+
         try:
             cursor = conn.cursor()
+
             for item in details:
-                cursor.execute("SELECT quantity FROM Inventory WHERE warehouse_id=? AND product_id=?",
-                               (transfer['from_warehouse_id'], item['product_id']))
+                cursor.execute(
+                    "SELECT quantity FROM Inventory WHERE warehouse_id=? AND product_id=?",
+                    (transfer['from_warehouse_id'], item['product_id'])
+                )
                 stock = cursor.fetchone()
-                if not stock or stock['quantity'] < item['quantity']:
-                    abort(400, f"Not enough stock for product {item['product_id']}")
+
+                # ⚠️ pyodbc -> tuple => stock[0]
+                if not stock or stock[0] < item['quantity']:
+                    conn.rollback()
+                    return jsonify({
+                        "success": False,
+                        "message": f"Not enough stock for product {item['product_id']}"
+                    }), 400
+
+            for item in details:
                 cursor.execute(
                     "UPDATE Inventory SET quantity = quantity - ? WHERE warehouse_id=? AND product_id=?",
                     (item['quantity'], transfer['from_warehouse_id'], item['product_id'])
                 )
+
             conn.commit()
+
         except Exception as e:
             conn.rollback()
-            raise e
+            return jsonify({
+                "success": False,
+                "message": str(e)
+            }), 500
 
-    # Update status
-    execute_db("UPDATE Transfer_Orders SET status=? WHERE id=?", (status, id))
+    # ================== UPDATE STATUS ==================
+    execute_db(
+        "UPDATE Transfer_Orders SET status=? WHERE id=?",
+        (status, id)
+    )
 
-    return jsonify({"success": True, "data": {"transfer_id": id, "status": status}})
+    return jsonify({
+        "success": True,
+        "data": {
+            "transfer_id": id,
+            "status": status
+        }
+    })
 
-@transfer_bp.route('/transfers/suggest', methods=['GET'])
+@transfer_bp.route('/suggest', methods=['GET'])
 def suggest_warehouse():
     """
-    Suggest best warehouse
-    ---
-    tags:
-      - Transfers
-    parameters:
-      - in: query
-        name: product_id
-        type: integer
-        required: true
-      - in: query
-        name: to_warehouse_id
-        type: integer
-        required: true
-    responses:
-      200:
-        description: Success
-      400:
-        description: Invalid input
-    """
-    # FIX: ép kiểu int
+        Suggest best warehouse
+        ---
+        tags:
+          - Transfers
+        parameters:
+          - in: query
+            name: product_id
+            type: integer
+            required: true
+          - in: query
+            name: to_warehouse_id
+            type: integer
+            required: true
+        responses:
+          200:
+            description: Success
+          400:
+            description: Invalid input
+        """
     product_id = request.args.get('product_id', type=int)
     to_warehouse_id = request.args.get('to_warehouse_id', type=int)
 
@@ -245,36 +279,65 @@ def suggest_warehouse():
         one=True
     )
 
-    if not target:
-        abort(404, "Target warehouse not found")
-
     inventories = query_db(
         """
-        SELECT i.*, w.Latitude, w.Longitude
+        SELECT i.*, w.name, w.Latitude, w.Longitude
         FROM Inventory i
-        JOIN Warehouses w ON i.warehouse_id = w.id
-        WHERE product_id=? AND quantity > 0
+                 JOIN Warehouses w ON i.warehouse_id = w.id
+        WHERE product_id = ?
+          AND quantity > 0
         """,
         (product_id,)
     )
+    inventories = inventories[:5]
 
     best = None
-    best_score = None
+    best_score = float("inf")
 
     for inv in inventories:
-        dist = calculate_distance(
+        dist = get_route_distance(
             inv['Latitude'], inv['Longitude'],
             target['Latitude'], target['Longitude']
         )
 
-        # ưu tiên gần + nhiều hàng
-        score = dist - inv['quantity'] * 0.01
+        score = dist - inv['quantity'] * 50  # chỉnh trọng số
 
-        if best_score is None or score < best_score:
+        if score < best_score:
             best_score = score
             best = inv
 
     return jsonify({
         "success": True,
         "data": best
+    })
+
+@transfer_bp.route('/<int:id>', methods=['DELETE'])
+def delete_transfer(id):
+    transfer = query_db(
+        "SELECT * FROM Transfer_Orders WHERE id=?",
+        (id,),
+        one=True
+    )
+
+    if not transfer:
+        abort(404, "Transfer not found")
+
+    if transfer['status'] == "APPROVED":
+        abort(400, "Cannot delete approved transfer")
+
+    # xoá detail trước (FK)
+    execute_db(
+        "DELETE FROM Transfer_Details WHERE transfer_id=?",
+        (id,)
+    )
+
+    # xoá transfer
+    execute_db(
+        "DELETE FROM Transfer_Orders WHERE id=?",
+        (id,)
+    )
+
+    return jsonify({
+        "success": True,
+        "data": "Transfer deleted"
     })

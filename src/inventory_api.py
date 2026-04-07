@@ -6,6 +6,44 @@ inventory_bp = Blueprint('inventory', __name__)
 # ================= GET ALL =================
 @inventory_bp.route('/', methods=['GET'])
 def get_inventory():
+    """
+    Get all inventory items
+    ---
+    tags:
+      - Inventory
+    responses:
+      200:
+        description: Danh sách toàn bộ tồn kho
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  warehouse_id:
+                    type: integer
+                    example: 2
+                  product_id:
+                    type: integer
+                    example: 3
+                  warehouse_name:
+                    type: string
+                    example: "Main Warehouse"
+                  product_name:
+                    type: string
+                    example: "Product A"
+                  quantity:
+                    type: integer
+                    example: 100
+        """
     sql = """
         SELECT 
             i.id,
@@ -27,6 +65,39 @@ def get_inventory():
 # ================= ADD (CỘNG KHO) =================
 @inventory_bp.route('/add', methods=['POST'])
 def add_inventory():
+    """
+    Add inventory (increase quantity)
+    ---
+    tags:
+      - Inventory
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - warehouse_name
+            - product_name
+            - quantity
+          properties:
+            warehouse_name:
+              type: string
+              example: "Main Warehouse"
+            product_name:
+              type: string
+              example: "Product A"
+            quantity:
+              type: integer
+              example: 50
+    responses:
+      200:
+        description: Added successfully
+      400:
+        description: Missing fields or not found
+      500:
+        description: Add failed
+    """
     data = request.json
 
     warehouse_name = data.get("warehouse_name")
@@ -80,6 +151,39 @@ def add_inventory():
 # ================= REMOVE (TRỪ KHO) =================
 @inventory_bp.route('/remove', methods=['POST'])
 def remove_inventory():
+    """
+    Remove inventory (decrease quantity)
+    ---
+    tags:
+      - Inventory
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - warehouse_name
+            - product_name
+            - quantity
+          properties:
+            warehouse_name:
+              type: string
+              example: "Main Warehouse"
+            product_name:
+              type: string
+              example: "Product A"
+            quantity:
+              type: integer
+              example: 20
+    responses:
+      200:
+        description: Removed successfully
+      400:
+        description: Missing fields, not found, or insufficient stock
+      500:
+        description: Remove failed
+    """
     data = request.json
 
     warehouse_name = data.get("warehouse_name")
@@ -128,7 +232,26 @@ def remove_inventory():
 
 @inventory_bp.route('/delete/<int:id>', methods=['DELETE'])
 def delete_inventory(id):
-
+    """
+    Delete inventory item
+    ---
+    tags:
+      - Inventory
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+        description: ID của inventory cần xóa
+        example: 1
+    responses:
+      200:
+        description: Deleted successfully
+      404:
+        description: Inventory not found
+      500:
+        description: Delete failed
+    """
     # check tồn tại
     exist = query_db(
         "SELECT id FROM Inventory WHERE id=?",
@@ -155,6 +278,37 @@ def delete_inventory(id):
 # ================= UPDATE =================
 @inventory_bp.route('/update/<int:id>', methods=['PUT'])
 def update_inventory(id):
+    """
+    Update inventory quantity
+    ---
+    tags:
+      - Inventory
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+        description: ID của inventory cần cập nhật
+        example: 1
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - quantity
+          properties:
+            quantity:
+              type: integer
+              example: 150
+    responses:
+      200:
+        description: Updated successfully
+      400:
+        description: Missing quantity
+      500:
+        description: Update failed
+    """
     data = request.json
 
     if not data or "quantity" not in data:
@@ -174,6 +328,22 @@ def update_inventory(id):
 # ================= SEARCH PRODUCT NAME =================
 @inventory_bp.route('/search/product', methods=['GET'])
 def search_product():
+    """
+        Search inventory by product name
+        ---
+        tags:
+          - Inventory
+        parameters:
+          - in: query
+            name: name
+            type: string
+            required: true
+            description: Product name to search
+            example: "Product A"
+        responses:
+          200:
+            description: List of matched inventory
+        """
     name = request.args.get("name")
 
     if not name:
@@ -199,6 +369,22 @@ def search_product():
 # ================= SEARCH WAREHOUSE NAME =================
 @inventory_bp.route('/search/warehouse', methods=['GET'])
 def search_warehouse():
+    """
+       Search inventory by warehouse name
+       ---
+       tags:
+         - Inventory
+       parameters:
+         - in: query
+           name: name
+           type: string
+           required: true
+           description: Warehouse name to search
+           example: "Main Warehouse"
+       responses:
+         200:
+           description: List of matched inventory
+       """
     name = request.args.get("name")
 
     if not name:

@@ -169,7 +169,7 @@ def update_shipment(id):
     if not shipment:
         abort(404, "Shipment not found")
 
-    old_status = shipment['status']   # FIX: lưu trạng thái cũ
+    old_status = shipment['status']
 
     status = data.get("status")
     driver_name = data.get("driver_name")
@@ -178,104 +178,179 @@ def update_shipment(id):
     if status and status not in VALID_STATUS:
         abort(400, "Invalid status")
 
-    fields = []
-    values = []
+    # Prevent invalid flow
+    if old_status == "DELIVERED":
+        abort(400, "Delivered shipment cannot be updated")
 
-    if status:
-        fields.append("status=?")
-        values.append(status)
+    if old_status == "PICKING" and status == "DELIVERED":
+        abort(400, "Invalid status flow: must go through SHIPPING first")
 
-    if driver_name:
-        fields.append("driver_name=?")
-        values.append(driver_name)
+    conn = get_db_connection()
 
-    if license_plate:
-        fields.append("license_plate=?")
-        values.append(license_plate)
+    try:
+        cursor = conn.cursor()
 
-    if not fields:
-        abort(400, "No data to update")
+        fields = []
+        values = []
 
-    # nếu giao xong → lưu thời gian thực tế
-    if status == "DELIVERED":
-        fields.append("actual_delivery_at=?")
-        values.append(datetime.now())
+        if status:
+            fields.append("status=?")
+            values.append(status)
 
-    values.append(id)
+        if driver_name:
+            fields.append("driver_name=?")
+            values.append(driver_name)
 
-    success = execute_db(
-        f"UPDATE Shipments SET {', '.join(fields)} WHERE id=?",
-        tuple(values)
-    )
-    # UPDATE TRANSFER STATUS
+        if license_plate:
+            fields.append("license_plate=?")
+            values.append(license_plate)
 
-    # khi đang vận chuyển
-    if status == "SHIPPING":
-        execute_db(
-            "UPDATE Transfer_Orders SET status='SHIPPING' WHERE id=?",
-            (shipment['transfer_id'],)
+        if not fields:
+            abort(400, "No data to update")
+
+        if status == "DELIVERED":
+            fields.append("actual_delivery_at=?")
+            values.append(datetime.now())
+
+        values.append(id)
+
+        # Update shipment
+        cursor.execute(
+            f"UPDATE Shipments SET {', '.join(fields)} WHERE id=?",
+            tuple(values)
         )
 
-    # FIX: tránh cộng kho nhiều lần
-    if old_status != "DELIVERED" and status == "DELIVERED":
+        # Update transfer status
+        if status == "SHIPPING":
+            cursor.execute(
+                "UPDATE Transfer_Orders SET status='SHIPPING' WHERE id=?",
+                (shipment['transfer_id'],)
+            )
 
-        transfer = query_db(
-            "SELECT * FROM Transfer_Orders WHERE id=?",
-            (shipment['transfer_id'],),
-            one=True
-        )
+        # When delivered → handle inventory
+        if old_status != "DELIVERED" and status == "DELIVERED":
 
-        details = query_db(
-            "SELECT * FROM Transfer_Details WHERE transfer_id=?",
-            (shipment['transfer_id'],)
-        )
-        # cộng kho đích
-        conn = get_db_connection()
+            transfer = query_db(
+                "SELECT * FROM Transfer_Orders WHERE id=?",
+                (shipment['transfer_id'],),
+                one=True
+            )
 
-        try:
-            cursor = conn.cursor()
+            if not transfer:
+                abort(404, "Transfer not found")
+
+            details = query_db(
+                "SELECT * FROM Transfer_Details WHERE transfer_id=?",
+                (shipment['transfer_id'],)
+            )
+
+            print("TRANSFER:", transfer)
 
             for item in details:
-                cursor.execute(
+                print("ITEM:", item['product_id'], item['quantity'])
+
+                inventory = query_db(
                     "SELECT * FROM Inventory WHERE warehouse_id=? AND product_id=?",
-                    (transfer['to_warehouse_id'], item['product_id'])
+                    (transfer['to_warehouse_id'], item['product_id']),
+                    one=True
                 )
-                inventory = cursor.fetchone()
 
                 if not inventory:
-                    abort(404, "Inventory not found")
+                    cursor.execute(
+                        """
+                        INSERT INTO Inventory (warehouse_id, product_id, quantity)
+                        VALUES (?, ?, ?)
+                        """,
+                        (transfer['to_warehouse_id'], item['product_id'], item['quantity'])
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        UPDATE Inventory
+                        SET quantity = quantity + ?
+                        WHERE warehouse_id = ?
+                          AND product_id = ?
+                        """,
+                        (item['quantity'], transfer['to_warehouse_id'], item['product_id'])
+                    )
 
-                cursor.execute(
-                    """
-                    UPDATE Inventory
-                    SET quantity = quantity + ?
-                    WHERE warehouse_id = ?
-                      AND product_id = ?
-                    """,
-                    (item['quantity'], transfer['to_warehouse_id'], item['product_id'])
-                )
-
+            # Mark transfer completed
             cursor.execute(
                 "UPDATE Transfer_Orders SET status='COMPLETED' WHERE id=?",
                 (shipment['transfer_id'],)
             )
 
-            conn.commit()
+        conn.commit()
 
-        except Exception as e:
-            conn.rollback()
-            raise e
-
-
-        # update transfer → COMPLETED
-        execute_db(
-            "UPDATE Transfer_Orders SET status='COMPLETED' WHERE id=?",
-            (shipment['transfer_id'],)
-        )
+    except Exception as e:
+        conn.rollback()
+        raise e
 
     return jsonify({
         "success": True,
         "data": "Shipment updated"
+    })
+@logistics_bp.route('/shipments/<int:transfer_id>', methods=['GET'])
+def get_shipment_by_id(transfer_id):
+    """
+    Get shipment by ID
+    ---
+    tags:
+      - Shipments
+    parameters:
+      - in: path
+        name: id
+        type: integer
+        required: true
+        description: ID của shipment cần tìm
+        example: 1
+    responses:
+      200:
+        description: Thông tin chi tiết shipment
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            data:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                transfer_id:
+                  type: integer
+                  example: 3
+                driver_name:
+                  type: string
+                  example: "Nguyen Van A"
+                license_plate:
+                  type: string
+                  example: "51A-12345"
+                status:
+                  type: string
+                  example: "SHIPPING"
+                expected_delivery_at:
+                  type: string
+                  example: "2026-03-26T10:00:00"
+                actual_delivery_at:
+                  type: string
+                  example: null
+      404:
+        description: Không tìm thấy shipment với ID này
+    """
+    shipments = query_db(
+        "SELECT * FROM Shipments WHERE transfer_id=?",
+        (transfer_id,),
+        one=False
+    )
+    if not shipments:
+        abort(404, "No shipments found for this transfer ID")
+
+    return jsonify({
+        "success": True,
+        "data": [dict(s) for s in shipments]
     })
 
 @logistics_bp.route('/shipments/<int:id>', methods=['DELETE'])
