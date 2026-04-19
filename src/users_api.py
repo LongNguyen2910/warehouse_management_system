@@ -66,7 +66,7 @@ def register():
       abort(500, description="Đã xảy ra lỗi khi tạo tài khoản")
 
 @users_bp.route('/', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def get_users():
   """
   API Lấy danh sách các người dùng có trong hệ thống
@@ -118,9 +118,9 @@ def get_users():
     404:
       description: "Không tim thấy người dùng nào phù hợp với tiêu chí tìm kiếm"
   """
-  # claims = get_jwt()
-  # if claims.get("role") != "ADMIN":
-  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  claims = get_jwt()
+  if claims.get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   id = flask.request.args.get("id")
   username = flask.request.args.get("username")
   query = "SELECT Users.id, Users.username, Roles.role_name, Users.created_at FROM Users JOIN Roles ON Users.role_id = Roles.id WHERE"
@@ -199,7 +199,7 @@ def change_password(id):
       abort(500, description="Đã xảy ra lỗi khi cập nhật mật khẩu")
 
 @users_bp.route('/', methods=['PUT'])
-# @jwt_required()
+@jwt_required()
 def update_user_role():
   """
   API Cập nhật vai trò của người dùng
@@ -237,9 +237,9 @@ def update_user_role():
     500:
       description: "Đã xảy ra lỗi khi cập nhật vai trò của người dùng"
   """
-  # claims = get_jwt()
-  # if claims.get("role") != "ADMIN":
-  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  claims = get_jwt()
+  if claims.get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   user_id = payload.get("user_id")
   role_id = payload.get("role_id")
@@ -259,7 +259,7 @@ def update_user_role():
 
 
 @users_bp.route('/<id>', methods=['DELETE'])
-# @jwt_required()
+@jwt_required()
 def delete_user(id):
   """
   API Xóa người dùng
@@ -284,11 +284,11 @@ def delete_user(id):
       description: "Không tìm thấy người dùng với ID đã cho"
     500:
       description: "Đã xảy ra lỗi khi xóa người dùng"
-      description: "Không tìm thấy người dùng với ID đã cho"  
+      description: "Không tìm thấy người dùng với ID đã cho"
   """
-  # claims = get_jwt()
-  # if claims.get("role") != "ADMIN":
-  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  claims = get_jwt()
+  if claims.get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   existing = query_db("SELECT id FROM Users WHERE id = ?", (id,), one=True)
   if not existing:
     abort(404, description="Không tìm thấy người dùng với ID đã cho")

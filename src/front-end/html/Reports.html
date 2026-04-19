@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/" data-template="vertical-menu-template-free">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+
+    <title>Reports - Inventory Management</title>
+
+    <meta name="description" content="Inventory Reports & Analytics" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="../assets/img/favicon/favicon.ico" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet" />
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="../assets/vendor/fonts/boxicons.css" />
+
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="../assets/vendor/css/core.css" class="template-customizer-core-css" />
+    <link rel="stylesheet" href="../assets/vendor/css/theme-default.css" class="template-customizer-theme-css" />
+    <link rel="stylesheet" href="../assets/css/demo.css" />
+
+    <!-- Vendors CSS -->
+    <link rel="stylesheet" href="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
+
+    <!-- Helpers -->
+    <script src="../assets/vendor/js/helpers.js"></script>
+
+    <script src="../assets/js/config.js"></script>
+    <script src="../assets/js/user.js"></script>
+    
+    <style>
+      .alert {
+        margin-bottom: 1rem;
+      }
+      .table-responsive {
+        max-height: 600px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Layout wrapper -->
+    <div class="layout-wrapper layout-content-navbar">
+      <div class="layout-container">
+        <!-- Menu -->
+
+        <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+          <div class="app-brand demo">
+            <a href="index.html" class="app-brand-link">
+              <span class="app-brand-logo demo">
+                <svg
+                  width="25"
+                  viewBox="0 0 25 42"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  xmlns:xlink="http://www.w3.org/1999/xlink"
+                >
+                  <defs>
+                    <path
+                      d="M13.7918663,0.358365126 L3.39788168,7.44174259 C0.566865006,9.69408886 -0.379795268,12.4788597 0.557900856,15.7960551 C0.68998853,16.2305145 1.09562888,17.7872135 3.12357076,19.2293357 C3.8146334,19.7207684 5.32369333,20.3834223 7.65075054,21.2172976 L7.59773219,21.2525164 L2.63468769,24.5493413 C0.445452254,26.3002124 0.0884951797,28.5083815 1.56381646,31.1738486 C2.83770406,32.8170431 5.20850219,33.2640127 7.09180128,32.5391577 C8.347334,32.0559211 11.4559176,30.0011079 16.4175519,26.3747182 C18.0338572,24.4997857 18.6973423,22.4544883 18.4080071,20.2388261 C17.963753,17.5346866 16.1776345,15.5799961 13.0496516,14.3747546 L10.9194936,13.4715819 L18.6192054,7.984237 L13.7918663,0.358365126 Z"
+                      id="path-1"
+                    ></path>
+                    <path
+                      d="M5.47320593,6.00457225 C4.05321814,8.216144 4.36334763,10.0722806 6.40359441,11.5729822 C8.61520715,12.571656 10.0999176,13.2171421 10.8577257,13.5094407 L15.5088241,14.433041 L18.6192054,7.984237 C15.5364148,3.11535317 13.9273018,0.573395879 13.7918663,0.358365126 C13.5790555,0.511491653 10.8061687,2.3935607 5.47320593,6.00457225 Z"
+                      id="path-3"
+                    ></path>
+                    <path
+                      d="M7.50063644,21.2294429 L12.3234468,23.3159332 C14.1688022,24.7579751 14.397098,26.4880487 13.008334,28.506154 C11.6195701,30.5242593 10.3099883,31.790241 9.07958868,32.3040991 C5.78142938,33.4346997 4.13234973,34 4.13234973,34 C4.13234973,34 2.75489982,33.0538207 2.37032616e-14,31.1614621 C-0.55822714,27.8186216 -0.55822714,26.0572515 -4.05231404e-15,25.8773518 C0.83734071,25.6075023 2.77988457,22.8248993 3.3049379,22.52991 C3.65497346,22.3332504 5.05353963,21.8997614 7.50063644,21.2294429 Z"
+                      id="path-4"
+                    ></path>
+                    <path
+                      d="M20.6,7.13333333 L25.6,13.8 C26.2627417,14.6836556 26.0836556,15.9372583 25.2,16.6 C24.8538077,16.8596443 24.4327404,17 24,17 L14,17 C12.8954305,17 12,16.1045695 12,15 C12,14.5672596 12.1403557,14.1461923 12.4,13.8 L17.4,7.13333333 C18.0627417,6.24967773 19.3163444,6.07059163 20.2,6.73333333 C20.3516113,6.84704183 20.4862915,6.981722 20.6,7.13333333 Z"
+                      id="path-5"
+                    ></path>
+                  </defs>
+                  <g id="g-app-brand" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                    <g id="Brand-Logo" transform="translate(-27.000000, -15.000000)">
+                      <g id="Icon" transform="translate(27.000000, 15.000000)">
+                        <g id="Mask" transform="translate(0.000000, 8.000000)">
+                          <mask id="mask-2" fill="white">
+                            <use xlink:href="#path-1"></use>
+                          </mask>
+                          <use fill="#696cff" xlink:href="#path-1"></use>
+                          <g id="Path-3" mask="url(#mask-2)">
+                            <use fill="#696cff" xlink:href="#path-3"></use>
+                            <use fill-opacity="0.2" fill="#FFFFFF" xlink:href="#path-3"></use>
+                          </g>
+                          <g id="Path-4" mask="url(#mask-2)">
+                            <use fill="#696cff" xlink:href="#path-4"></use>
+                            <use fill-opacity="0.2" fill="#FFFFFF" xlink:href="#path-4"></use>
+                          </g>
+                        </g>
+                        <g
+                          id="Triangle"
+                          transform="translate(19.000000, 11.000000) rotate(-300.000000) translate(-19.000000, -11.000000) "
+                        >
+                          <use fill="#696cff" xlink:href="#path-5"></use>
+                          <use fill-opacity="0.2" fill="#FFFFFF" xlink:href="#path-5"></use>
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+                </svg>
+              </span>
+              <span class="app-brand-text demo menu-text fw-bolder ms-2">Sneat</span>
+            </a>
+
+            <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+              <i class="bx bx-chevron-left bx-sm align-middle"></i>
+            </a>
+          </div>
+
+          <div class="menu-inner-shadow"></div>
+
+          <ul class="menu-inner py-1">
+            <!-- Dashboard -->
+            <li class="menu-item active">
+              <a href="index.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                <div data-i18n="Analytics">Dashboard</div>
+              </a>
+            </li>
+
+            <!-- Layouts -->
+            <li class="menu-item">
+              <a href="Reports.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-layout"></i>
+                <div data-i18n="Reports">Reports</div>
+              </a>
+            </li>
+
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Pages</span>
+            </li>
+            <li class="menu-item">
+              <a href="product-table.html" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-dock-top"></i>
+                <div data-i18n="Product">Product</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a href="receipt-list.html" class="menu-link">
+                <i class="menu-icon tf-icons bx  bx-collection"></i>
+                <div data-i18n="In/OutBound">In/OutBound</div>
+              </a>
+            </li>
+
+            <!-- Misc -->
+            <li class="menu-header small text-uppercase">
+              <span class="menu-header-text">Admin</span>
+            </li>
+            <li class="menu-item">
+              <a
+                href="warehouse.html"
+                target="_blank"
+                class="menu-link"
+              >
+                <i class="menu-icon tf-icons bx bx-crown"></i>
+                <div data-i18n="Warehouse">Warehouse</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a
+                href="categories.html"
+                target="_blank"
+                class="menu-link"
+              >
+                <i class="menu-icon tf-icons bx bx-crown"></i>
+                <div data-i18n="Categories">Categories</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a
+                href="roles.html"
+                target="_blank"
+                class="menu-link"
+              >
+                <i class="menu-icon tf-icons bx bx-crown"></i>
+                <div data-i18n="Roles">Roles</div>
+              </a>
+            </li>
+            <li class="menu-item">
+              <a
+                href="users.html"
+                target="_blank"
+                class="menu-link"
+              >
+                <i class="menu-icon tf-icons bx bx-crown"></i>
+                <div data-i18n="Users">Users</div>
+              </a>
+            </li>
+          </ul>
+        </aside>
+        <!-- / Menu -->
+
+        <!-- Layout container -->
+        <div class="layout-page">
+          <!-- Header -->
+          <!-- Content wrapper -->
+          <div class="content-wrapper">
+            <!-- Content -->
+
+            <div class="container-xxl flex-grow-1 container-p-y">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="fw-bold mb-0">Reports</h4>
+                <div class="nav-item navbar-dropdown dropdown-user dropdown">
+                  <a
+                    class="nav-link dropdown-toggle hide-arrow"
+                    href="javascript:void(0);"
+                    data-bs-toggle="dropdown"
+                  >
+                    <div class="flex-grow-1">
+                      <span class="fw-semibold d-block" id="user_name">John Doe</span>
+                      <small class="text-muted" id="user_role">Admin</small>
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="javascript:void(0);" id="log_out">
+                        <i class="bx bx-power-off me-2"></i>
+                        <span class="align-middle">Log Out</span>
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Navigation Tabs -->
+              <div class="nav-align-top mb-4">
+                <ul class="nav nav-tabs" role="tablist">
+                  <li class="nav-item">
+                    <button class="nav-link active" id="tonkho-tab" data-bs-toggle="tab" data-bs-target="#tonkho" type="button" role="tab" aria-controls="tonkho" aria-selected="true">
+                      <i class="bx bx-box me-2"></i>Tồn kho
+                    </button>
+                  </li>
+                  <li class="nav-item">
+                    <button class="nav-link" id="lowstock-tab" data-bs-toggle="tab" data-bs-target="#lowstock" type="button" role="tab" aria-controls="lowstock" aria-selected="false">
+                      <i class="bx bx-bell me-2"></i>Cảnh báo hàng
+                    </button>
+                  </li>
+                  <li class="nav-item">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
+                      <i class="bx bx-history me-2"></i>Lịch sử
+                    </button>
+                  </li>
+                  <li class="nav-item">
+                    <button class="nav-link" id="transfer-tab" data-bs-toggle="tab" data-bs-target="#transfer" type="button" role="tab" aria-controls="transfer" aria-selected="false">
+                      <i class="bx bx-transfer me-2"></i>Điều chuyển
+                    </button>
+                  </li>
+                  <li class="nav-item">
+                    <button class="nav-link" id="receipt-tab" data-bs-toggle="tab" data-bs-target="#receipt" type="button" role="tab" aria-controls="receipt" aria-selected="false">
+                      <i class="bx bx-receipt me-2"></i>Phiếu nhập/xuất
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Export Button -->
+              <div class="mb-3">
+                <button type="button" class="btn btn-success" id="exportBtn">
+                  <i class="bx bx-download me-2"></i>Export Excel
+                </button>
+              </div>
+
+              <!-- Tab Content -->
+              <div class="tab-content">
+                <!-- Tồn kho Tab -->
+                <div class="tab-pane fade show active" id="tonkho" role="tabpanel" aria-labelledby="tonkho-tab">
+                  <div class="card">
+                    <h5 class="card-header">Danh sách tồn kho</h5>
+                    <div id="alert-tonkho"></div>
+                    <div class="table-responsive text-nowrap">
+                      <table class="table" id="table-tonkho">
+                        <thead>
+                          <tr>
+                            <th>Kho hàng</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Tồn kho</th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0" id="tbody-tonkho">
+                        </tbody>
+                      </table>
+                    </div>
+                    <div id="pagination-tonkho" class="mt-3"></div>
+                  </div>
+                </div>
+
+                <!-- Low Stock Tab -->
+                <div class="tab-pane fade" id="lowstock" role="tabpanel" aria-labelledby="lowstock-tab">
+                  <div class="card">
+                    <h5 class="card-header">Sản phẩm sắp hết hàng</h5>
+                    <div id="alert-lowstock"></div>
+                    <div class="table-responsive text-nowrap">
+                      <table class="table" id="table-lowstock">
+                        <thead>
+                          <tr>
+                            <th>Tên sản phẩm</th>
+                            <th>Min Stock</th>
+                            <th>Tồn kho hiện tại</th>
+                            <th>Cần nhập thêm</th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0" id="tbody-lowstock">
+                        </tbody>
+                      </table>
+                    </div>
+                    <div id="pagination-lowstock" class="mt-3"></div>
+                  </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                  <div class="card">
+                    <h5 class="card-header">Lịch sử nhập/xuất</h5>
+                    <div class="mb-3">
+                      <input type="text" class="form-control" id="historySkuInput" placeholder="Nhập SKU để tìm kiếm..." />
+                    </div>
+                    <div id="alert-history"></div>
+                    <div class="table-responsive text-nowrap">
+                      <table class="table" id="table-history">
+                        <thead>
+                          <tr>
+                            <th>SKU</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Kho</th>
+                            <th>Thay đổi số lượng</th>
+                            <th>Loại hành động</th>
+                            <th>Thời gian</th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0" id="tbody-history">
+                        </tbody>
+                      </table>
+                    </div>
+                    <div id="pagination-history" class="mt-3"></div>
+                  </div>
+                </div>
+
+                <!-- Transfer Tab -->
+                <div class="tab-pane fade" id="transfer" role="tabpanel" aria-labelledby="transfer-tab">
+                  <div class="card">
+                    <h5 class="card-header">Lịch sử điều chuyển</h5>
+                    <div id="alert-transfer"></div>
+                    <div class="table-responsive text-nowrap">
+                      <table class="table" id="table-transfer">
+                        <thead>
+                          <tr>
+                            <th>SKU</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Từ kho</th>
+                            <th>Đến kho</th>
+                            <th>Số lượng</th>
+                            <th>Nhân viên</th>
+                            <th>Trạng thái</th>
+                            <th>Thời gian</th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0" id="tbody-transfer">
+                        </tbody>
+                      </table>
+                    </div>
+                    <div id="pagination-transfer" class="mt-3"></div>
+                  </div>
+                </div>
+
+                <!-- Receipt Tab -->
+                <div class="tab-pane fade" id="receipt" role="tabpanel" aria-labelledby="receipt-tab">
+                  <div class="card">
+                    <h5 class="card-header">Phiếu nhập/xuất</h5>
+                    <div id="alert-receipt"></div>
+                    <div class="table-responsive text-nowrap">
+                      <table class="table" id="table-receipt">
+                        <thead>
+                          <tr>
+                            <th>ID Phiếu</th>
+                            <th>Loại</th>
+                            <th>Kho</th>
+                            <th>SKU</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Số lượng</th>
+                            <th>Giá</th>
+                            <th>Tổng giá trị</th>
+                            <th>Nhân viên</th>
+                            <th>Partner</th>
+                            <th>Thời gian</th>
+                          </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0" id="tbody-receipt">
+                        </tbody>
+                      </table>
+                    </div>
+                    <div id="pagination-receipt" class="mt-3"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+            <!-- / Content -->
+
+            <!-- Footer -->
+            <footer class="content-footer footer bg-footer-theme">
+              <div class="container-xxl d-flex flex-wrap justify-content-between py-2 flex-md-row flex-column">
+                <div class="mb-2 mb-md-0">
+                  ©
+                  <script>
+                    document.write(new Date().getFullYear());
+                  </script>
+                  , Warehouse Management System
+                </div>
+              </div>
+            </footer>
+            <!-- / Footer -->
+
+            <div class="content-backdrop fade"></div>
+          </div>
+          <!-- Content wrapper -->
+        </div>
+        <!-- / Layout page -->
+      </div>
+
+      <!-- Overlay -->
+      <div class="layout-overlay layout-menu-toggle"></div>
+    </div>
+    <!-- / Layout wrapper -->
+
+    <!-- Core JS -->
+    <!-- build:js assets/vendor/js/core.js -->
+    <script src="../assets/vendor/libs/jquery/jquery.js"></script>
+    <script src="../assets/vendor/libs/popper/popper.js"></script>
+    <script src="../assets/vendor/js/bootstrap.js"></script>
+    <script src="../assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+
+    <script src="../assets/vendor/js/menu.js"></script>
+    <!-- endbuild -->
+
+    <!-- Vendors JS -->
+
+    <!-- Main JS -->
+    <script src="../assets/js/main.js"></script>
+
+    <!-- Reports JS -->
+    <script>
+      //Format tiền 
+      function formatCurrency(value) {
+        return new Intl.NumberFormat('vi-VN', {
+          style: 'currency',
+          currency: 'VND'
+        }).format(value || 0);
+      }
+
+      //Format ngày tháng
+      function formatDate(dateString) {
+        if (!dateString) return '-';
+        try {
+          const date = new Date(dateString);
+          return date.toLocaleString('vi-VN');
+        } catch {
+          return dateString;
+        }
+      }
+
+      // Hàm alert
+      function showAlert(elementId, type, message) {
+        const alertEl = document.getElementById(elementId);
+        const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+        alertEl.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+      }
+
+      // Load Tồn kho
+      function loadTonKho() {
+        const tbody = document.getElementById('tbody-tonkho');
+
+        tbody.innerHTML = '';
+
+        $.ajax({
+          url: 'http://localhost:5000/api/reports',
+          type: 'GET',
+          xhrFields: { withCredentials: true },
+          success: function (res) {
+            if (res.success && res.data && res.data.length > 0) {
+              reportData.tonkho = res.data;
+              currentPage.tonkho = 1;
+              renderTonKhoPage();
+            } else {
+              reportData.tonkho = [];
+              renderPagination('tonkho', 0);
+              showAlert('alert-tonkho', 'info', 'Không có sản phẩm nào tồn kho');
+            }
+          },
+          error: function (xhr, status, error) {
+            if (xhr.status === 401) {
+              logout();
+              return;
+            } else {
+            showAlert('alert-tonkho', 'error', `Không có sản phẩm nào tồn kho`);
+            }
+          },
+          complete: function () {
+          }
+        });
+      }
+
+      // Load Low Stock
+      function loadLowStock() {
+        const tbody = document.getElementById('tbody-lowstock');
+
+        tbody.innerHTML = '';
+
+        $.ajax({
+          url: 'http://localhost:5000/api/reports/low-stock',
+          type: 'GET',
+          xhrFields: { withCredentials: true },
+          success: function (res) {
+            if (res.success && res.data && res.data.length > 0) {
+              reportData.lowstock = res.data;
+              currentPage.lowstock = 1;
+              renderLowStockPage();
+            } else {
+              reportData.lowstock = [];
+              renderPagination('lowstock', 0);
+              showAlert('alert-lowstock', 'info', 'Không còn sản phẩm nào sắp hết hàng');
+            }
+          },
+          error: function (xhr, status, error) {
+            if (xhr.status === 401) {
+              logout();
+              return;
+            } else {
+            showAlert('alert-lowstock', 'error', `Không có sản phẩm nào sắp hết hàng`);
+            }
+          },
+          complete: function () {
+          }
+        });
+      }
+
+      // Load History
+      function loadHistory(sku = '') {
+        const tbody = document.getElementById('tbody-history');
+
+        tbody.innerHTML = '';
+
+        if (!sku.trim()) {
+          reportData.history = [];
+          currentPage.history = 1;
+          renderHistoryPage();
+          showAlert('alert-history', 'info', 'Vui lòng nhập SKU để tìm kiếm lịch sử nhập xuất');
+          return;
+        }
+        $.ajax({
+          url: 'http://localhost:5000/api/reports/history/' + sku,
+          type: 'GET',
+          xhrFields: { withCredentials: true },
+          success: function (res) {
+            if (res.success && res.data && res.data.length > 0) {
+              reportData.history = res.data;
+              currentPage.history = 1;
+              renderHistoryPage();
+            } else {
+              reportData.history = [];
+              renderPagination('history', 0);
+              showAlert('alert-history', 'info', 'Không tìm thấy lịch sử nào cho SKU này');
+            }
+          },
+          error: function (xhr, status, error) {
+            if (xhr.status === 401) {
+              logout();
+              return;
+            } else {
+              showAlert('alert-history', 'error', `Không tìm thấy lịch sử nào cho SKU này`);
+            }
+          },
+          complete: function () {
+          }
+        });
+      }
+
+      // Load Transfer
+      function loadTransfer() {
+        const tbody = document.getElementById('tbody-transfer');
+
+        tbody.innerHTML = '';
+
+        $.ajax({
+          url: 'http://localhost:5000/api/reports/transfer-history',
+          type: 'GET',
+          xhrFields: { withCredentials: true },
+          success: function (res) {
+            if (res.success && res.data && res.data.length > 0) {
+              reportData.transfer = res.data;
+              currentPage.transfer = 1;
+              renderTransferPage();
+            } else {
+              reportData.transfer = [];
+              renderPagination('transfer', 0);
+              showAlert('alert-transfer', 'info', 'Không tìm thấy lịch sử điều chuyển nào');
+            }
+          },
+          error: function (xhr, status, error) {
+            if (xhr.status === 401) {
+              logout();
+              return;
+            } else {
+              showAlert('alert-transfer', 'error', `Không tìm thấy lịch sử điều chuyển nào`);
+            }
+          },
+          complete: function () {
+          }
+        });
+      }
+
+      // Load Receipt
+      function loadReceipt() {
+        const tbody = document.getElementById('tbody-receipt');
+
+        tbody.innerHTML = '';
+
+        $.ajax({
+          url: 'http://localhost:5000/api/reports/receipt',
+          type: 'GET',
+          xhrFields: { withCredentials: true },
+          success: function (res) {
+            if (res.success && res.data && res.data.length > 0) {
+              reportData.receipt = res.data;
+              currentPage.receipt = 1;
+              renderReceiptPage();
+            } else {
+              reportData.receipt = [];
+              renderPagination('receipt', 0);
+              showAlert('alert-receipt', 'info', 'Không tìm thấy phiếu nhập/xuất nào');
+            }
+          },
+          error: function (xhr, status, error) {
+            if (xhr.status === 401) {
+              logout();
+              return;
+            } else {
+              showAlert('alert-receipt', 'error', `Không tìm thấy phiếu nhập/xuất nào`);
+            }
+          },
+          complete: function () {
+          }
+        });
+      }
+
+      const PAGE_SIZE = 5;
+      const reportData = {
+        tonkho: [],
+        lowstock: [],
+        history: [],
+        transfer: [],
+        receipt: []
+      };
+
+      const currentPage = {
+        tonkho: 1,
+        lowstock: 1,
+        history: 1,
+        transfer: 1,
+        receipt: 1
+      };
+
+      function renderPagination(tableKey, totalItems) {
+        const pagination = document.getElementById('pagination-' + tableKey);
+        if (!pagination) return;
+
+        const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+        if (totalPages <= 1) {
+          pagination.innerHTML = '';
+          return;
+        }
+
+        let html = '<nav aria-label="Page navigation"><ul class="pagination justify-content-center mb-0">';
+        const current = currentPage[tableKey];
+
+        html += '<li class="page-item ' + (current === 1 ? 'disabled' : '') + '">';
+        html += '<button class="page-link" type="button" data-table="' + tableKey + '" data-page="' + (current - 1) + '"><</button>';
+        html += '</li>';
+
+        html += '<li class="page-item active">';
+        html += '<span class="page-link">' + current + '</span>';
+        html += '</li>';
+
+        html += '<li class="page-item ' + (current === totalPages ? 'disabled' : '') + '">';
+        html += '<button class="page-link" type="button" data-table="' + tableKey + '" data-page="' + (current + 1) + '">></button>';
+        html += '</li>';
+        html += '</ul></nav>';
+
+        pagination.innerHTML = html;
+      }
+
+      function renderTonKhoPage() {
+        const data = reportData.tonkho || [];
+        const tbody = document.getElementById('tbody-tonkho');
+        const start = (currentPage.tonkho - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = data.slice(start, end);
+        let html = '';
+
+        for (let i = 0; i < pageData.length; i++) {
+          html += '<tr>';
+          html += '<td>' + (pageData[i].warehouse_name || '-') + '</td>';
+          html += '<td><strong>' + pageData[i].product_name + '</strong></td>';
+          html += '<td><span class="badge bg-label-info">' + pageData[i].quantity + '</span></td>';
+          html += '</tr>';
+        }
+
+        tbody.innerHTML = html;
+        renderPagination('tonkho', data.length);
+      }
+
+      function renderLowStockPage() {
+        const data = reportData.lowstock || [];
+        const tbody = document.getElementById('tbody-lowstock');
+        const start = (currentPage.lowstock - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = data.slice(start, end);
+        let html = '';
+
+        for (let i = 0; i < pageData.length; i++) {
+          html += '<tr>';
+          html += '<td><strong>' + pageData[i].product_name + '</strong></td>';
+          html += '<td>' + pageData[i].min_stock + '</td>';
+          html += '<td><span class="badge bg-label-warning">' + pageData[i].total_quantity + '</span></td>';
+          html += '<td><span class="badge bg-label-danger">' + pageData[i].need_to_import + '</span></td>';
+          html += '</tr>';
+        }
+
+        tbody.innerHTML = html;
+        renderPagination('lowstock', data.length);
+      }
+
+      function renderHistoryPage() {
+        const data = reportData.history || [];
+        const tbody = document.getElementById('tbody-history');
+        const start = (currentPage.history - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = data.slice(start, end);
+        let html = '';
+
+        for (let i = 0; i < pageData.length; i++) {
+          html += '<tr>';
+          html += '<td><code>' + pageData[i].sku + '</code></td>';
+          html += '<td>' + pageData[i].product_name + '</td>';
+          html += '<td>' + (pageData[i].warehouse_name || '-') + '</td>';
+          html += '<td><span class="badge bg-label-primary">' + pageData[i].change_amount + '</span></td>';
+          html += '<td><span class="badge bg-label-secondary">' + pageData[i].action_type + '</span></td>';
+          html += '<td>' + formatDate(pageData[i].created_at) + '</td>';
+          html += '</tr>';
+        }
+
+        tbody.innerHTML = html;
+        renderPagination('history', data.length);
+      }
+
+      function renderTransferPage() {
+        const data = reportData.transfer || [];
+        const tbody = document.getElementById('tbody-transfer');
+        const start = (currentPage.transfer - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = data.slice(start, end);
+        let html = '';
+
+        for (let i = 0; i < pageData.length; i++) {
+          html += '<tr>';
+          html += '<td><code>' + pageData[i].sku + '</code></td>';
+          html += '<td>' + pageData[i].product_name + '</td>';
+          html += '<td>' + pageData[i].from_warehouse + '</td>';
+          html += '<td>' + pageData[i].to_warehouse + '</td>';
+          html += '<td><span class="badge bg-label-info">' + pageData[i].quantity + '</span></td>';
+          html += '<td>' + (pageData[i].staff || 'System') + '</td>';
+          html += '<td><span class="badge bg-label-success">' + pageData[i].status + '</span></td>';
+          html += '<td>' + formatDate(pageData[i].created_at) + '</td>';
+          html += '</tr>';
+        }
+
+        tbody.innerHTML = html;
+        renderPagination('transfer', data.length);
+      }
+
+      function renderReceiptPage() {
+        const data = reportData.receipt || [];
+        const tbody = document.getElementById('tbody-receipt');
+        const start = (currentPage.receipt - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = data.slice(start, end);
+        let html = '';
+
+        for (let i = 0; i < pageData.length; i++) {
+          html += '<tr>';
+          html += '<td><span class="badge bg-label-primary">' + pageData[i].receipt_id + '</span></td>';
+          html += '<td>' + pageData[i].type + '</td>';
+          html += '<td>' + pageData[i].warehouse_name + '</td>';
+          html += '<td><code>' + pageData[i].sku + '</code></td>';
+          html += '<td>' + pageData[i].product_name + '</td>';
+          html += '<td>' + pageData[i].quantity + '</td>';
+          html += '<td>' + formatCurrency(pageData[i].price) + '</td>';
+          html += '<td><strong>' + formatCurrency(pageData[i].total_value) + '</strong></td>';
+          html += '<td>' + (pageData[i].staff || 'System') + '</td>';
+          html += '<td>' + (pageData[i].partner_name || '-') + '</td>';
+          html += '<td>' + formatDate(pageData[i].created_at) + '</td>';
+          html += '</tr>';
+        }
+
+        tbody.innerHTML = html;
+        renderPagination('receipt', data.length);
+      }
+
+      document.addEventListener('click', function (event) {
+        const button = event.target.closest('button[data-table][data-page]');
+        if (!button) {
+          return;
+        }
+
+        const tableKey = button.getAttribute('data-table');
+        const page = Number(button.getAttribute('data-page'));
+        if (!tableKey || isNaN(page) || page < 1) {
+          return;
+        }
+
+        currentPage[tableKey] = page;
+        switch (tableKey) {
+          case 'tonkho':
+            renderTonKhoPage();
+            break;
+          case 'lowstock':
+            renderLowStockPage();
+            break;
+          case 'history':
+            renderHistoryPage();
+            break;
+          case 'transfer':
+            renderTransferPage();
+            break;
+          case 'receipt':
+            renderReceiptPage();
+            break;
+        }
+      });
+
+      // Export Excel
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const link = document.createElement('a');
+        link.href = 'http://localhost:5000/api/reports/export/excel';
+        link.download = 'inventory_report.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      // History SKU search
+      document.getElementById('historySkuInput').addEventListener('change', (e) => {
+        loadHistory(e.target.value.trim());
+      });
+
+      // Tab change events
+      document.getElementById('tonkho-tab').addEventListener('shown.bs.tab', loadTonKho);
+      document.getElementById('lowstock-tab').addEventListener('shown.bs.tab', loadLowStock);
+      document.getElementById('transfer-tab').addEventListener('shown.bs.tab', loadTransfer);
+      document.getElementById('receipt-tab').addEventListener('shown.bs.tab', loadReceipt);
+
+      // Load initial tab (Tồn kho)
+      document.addEventListener('DOMContentLoaded', loadTonKho);
+    </script>
+  </body>
+</html>

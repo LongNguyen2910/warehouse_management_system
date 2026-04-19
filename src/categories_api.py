@@ -8,7 +8,7 @@ from validate_helper import is_empty
 categories_bp = Blueprint('categories', __name__)
 
 @categories_bp.route('/', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def get_categories():
   """
   API Lấy danh sách các danh mục có trong hệ thống
@@ -71,7 +71,7 @@ def get_categories():
   return jsonify({"success": True, "data": categories}), 200
 
 @categories_bp.route('/', methods=['POST'])
-# @jwt_required()
+@jwt_required()
 def create_category():
     """
     API Tạo mới một danh mục
@@ -112,9 +112,9 @@ def create_category():
         500:
             description: "Đã xảy ra lỗi khi tạo danh mục mới"
     """
-    # claims = get_jwt()
-    # if claims.get("role") != "ADMIN":
-    #     abort(403, description="Bạn không có quyền thực hiện hành động này")
+    claims = get_jwt()
+    if claims.get("role") != "ADMIN":
+        abort(403, description="Bạn không có quyền thực hiện hành động này")
     payload = flask.request.get_json(silent=True) or {}
     category_name = payload.get("name")
     if is_empty(category_name):
@@ -130,7 +130,7 @@ def create_category():
         abort(500, description="Đã xảy ra lỗi khi tạo danh mục mới")
 
 @categories_bp.route('/<id>', methods=['PUT'])
-# @jwt_required()
+@jwt_required()
 def update_category(id):
     """
     API Cập nhật thông tin danh mục
@@ -168,9 +168,9 @@ def update_category(id):
         500:
             description: "Đã xảy ra lỗi khi cập nhật danh mục"
     """
-    # claims = get_jwt()
-    # if claims.get("role") != "ADMIN":
-    #     abort(403, description="Bạn không có quyền thực hiện hành động này")
+    claims = get_jwt()
+    if claims.get("role") != "ADMIN":
+        abort(403, description="Bạn không có quyền thực hiện hành động này")
     payload = flask.request.get_json(silent=True) or {}
     category_name = payload.get("name")
     if is_empty(category_name):
@@ -189,7 +189,7 @@ def update_category(id):
         abort(500, description="Đã xảy ra lỗi khi cập nhật danh mục")
 
 @categories_bp.route('/<id>', methods=['DELETE'])
-# @jwt_required()
+@jwt_required()
 def delete_category(id):
     """
     API Xóa một danh mục
@@ -213,9 +213,9 @@ def delete_category(id):
         404:
             description: "Danh mục không tồn tại"
     """
-    # claims = get_jwt()
-    # if claims.get("role") != "ADMIN":
-    #     abort(403, description="Bạn không có quyền thực hiện hành động này")
+    claims = get_jwt()
+    if claims.get("role") != "ADMIN":
+        abort(403, description="Bạn không có quyền thực hiện hành động này")
     existing = query_db("SELECT id FROM Categories WHERE id = ?", (id,), one=True)
     if not existing:
         abort(404, description="Không tìm thấy danh mục với ID đã cho")

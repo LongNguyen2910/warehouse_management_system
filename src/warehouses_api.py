@@ -8,7 +8,7 @@ from validate_helper import is_empty
 warehouses_bp = Blueprint('warehouses', __name__)
 
 @warehouses_bp.route('/', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def get_warehouses():
   """
   API Lấy danh sách các kho hàng có trong hệ thống
@@ -85,7 +85,7 @@ def get_warehouses():
   return jsonify({"success": True, "data": warehouses}), 200
 
 @warehouses_bp.route('/', methods=['POST'])
-# @jwt_required()
+@jwt_required()
 def create_warehouse():
   """
   API Tạo kho hàng mới
@@ -135,9 +135,9 @@ def create_warehouse():
     500:
       description: "Đã xảy ra lỗi khi tạo kho hàng mới"
   """
-  # claims = get_jwt()
-  # if claims.get("role") != "ADMIN":
-  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  claims = get_jwt()
+  if claims.get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   warehouse_name = payload.get("name")
   address = payload.get("address")
@@ -154,7 +154,7 @@ def create_warehouse():
       abort(500, description="Đã xảy ra lỗi khi tạo kho hàng mới")
 
 @warehouses_bp.route('/<id>', methods=['PUT'])
-# @jwt_required()
+@jwt_required()
 def update_warehouse(id):
   """
   API Cập nhật thông tin kho hàng
@@ -210,9 +210,9 @@ def update_warehouse(id):
     500:
       description: "Đã xảy ra lỗi khi cập nhật thông tin kho hàng"
   """
-  # claims = get_jwt()
-  # if claims.get("role") != "ADMIN":
-  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  claims = get_jwt()
+  if claims.get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   payload = flask.request.get_json(silent=True) or {}
   warehouse_name = payload.get("name")
   address = payload.get("address")
@@ -222,31 +222,33 @@ def update_warehouse(id):
   existing = query_db("SELECT id FROM Warehouses WHERE id = ?", (id,), one=True)
   if not existing:
     abort(404, description="Không tìm thấy kho hàng với ID đã cho")
-  data = ()
-  query = "UPDATE Warehouses SET"
-  if warehouse_name:
+  set_clauses = []
+  data = []
+  if warehouse_name is not None and warehouse_name.strip() != "":
     warehouse_name = warehouse_name.strip()
-    query += " name = ?,"
-    data += (warehouse_name,)
-  if address:
+    set_clauses.append("name = ?")
+    data.append(warehouse_name)
+  if address is not None and address.strip() != "":
     address = address.strip()
-    query += " address = ?,"
-    data += (address,)
-  if capacity:
+    set_clauses.append("address = ?")
+    data.append(address)
+  if capacity is not None and capacity != "":
     capacity = int(capacity)
-    query += " capacity = ?,"
-    data += (capacity,)
-  if longitude:
-    query += " longitude = ?,"
-    data += (longitude,)
-  if latitude:
-    query += " latitude = ?,"
-    data += (latitude,)
-  execute_db(query.rstrip(",") + " WHERE id = ?", (*data, id))
+    set_clauses.append("capacity = ?")
+    data.append(capacity)
+  if longitude is not None and longitude != "":
+    set_clauses.append("longitude = ?")
+    data.append(longitude)
+  if latitude is not None and latitude != "":
+    set_clauses.append("latitude = ?")
+    data.append(latitude)
+  if not set_clauses:
+    abort(400, description="Không có dữ liệu nào để cập nhật")
+  execute_db(f"UPDATE Warehouses SET {', '.join(set_clauses)} WHERE id = ?", (*data, id))
   return jsonify({"success": True, "message": "Kho hàng đã được cập nhật"}), 200
 
 @warehouses_bp.route('/<id>', methods=['DELETE'])
-# @jwt_required()
+@jwt_required()
 def delete_warehouse(id):
   """
   API Xóa kho hàng
@@ -270,9 +272,9 @@ def delete_warehouse(id):
     404:
       description: "Không tìm thấy kho hàng với ID đã cho"
   """
-  # claims = get_jwt()
-  # if claims.get("role") != "ADMIN":
-  #   abort(403, description="Bạn không có quyền thực hiện hành động này")
+  claims = get_jwt()
+  if claims.get("role") != "ADMIN":
+    abort(403, description="Bạn không có quyền thực hiện hành động này")
   existing = query_db("SELECT id FROM Warehouses WHERE id = ?", (id,), one=True)
   if not existing:
     abort(404, description="Không tìm thấy kho hàng với ID đã cho")

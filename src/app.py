@@ -18,12 +18,16 @@ from warehouses_api import warehouses_bp
 from product_api import products_bp
 from categories_api import categories_bp
 from receipt_api import receipt_bp
+from transfer_api import transfer_bp
 app = Flask(__name__)
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-jwt = JWTManager(app)
+CORS(app, supports_credentials=True, origins=["http://localhost:5500", "http://127.0.0.1:5500"])
 
-CORS(app)
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+app.config["JWT_ACCESS_COOKIE_NAME"] = "access_token"
+app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+jwt = JWTManager(app)
 
 app.url_map.strict_slashes = False
 
@@ -51,6 +55,7 @@ app.register_blueprint(warehouses_bp, url_prefix='/api/warehouses')
 app.register_blueprint(products_bp, url_prefix='/api/products')
 app.register_blueprint(receipt_bp, url_prefix='/api/receipts')
 app.register_blueprint(categories_bp, url_prefix='/api/categories')
+app.register_blueprint(transfer_bp, url_prefix='/api/transfers')
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -110,7 +115,7 @@ def my_unauthorized_callback(err_str):
     return jsonify({
         "success": False,
         "error_code": "MISSING_TOKEN",
-        "message": "Vui lòng cung cấp Access Token trong Header"
+        "message": "Vui lòng cung cấp Access Token trong Header hoặc Cookie"
     }), 401
 
 
